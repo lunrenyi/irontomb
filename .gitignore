@@ -1,0 +1,5 @@
+# Rust / Cargo
+target/
+
+# 每次任务留下的临时笔记
+.tmp
