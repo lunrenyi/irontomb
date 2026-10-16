@@ -1,0 +1,22 @@
+[package]
+name = "jev-snake"
+version = "0.1.0"
+edition = "2021"
+description = "Jev 通过 TypeSafe /v1/systemone 结构化决策 API 驱动贪吃蛇 —— elation 实验的精简版"
+license = "MIT"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# 真实 API 走 HTTPS；本地 mock / proxy 走纯 HTTP，不需要它。
+native-tls = "0.2"
+# 可视化界面。只用两个 crate，不引主题 / 图标 / i18n 那一套。
+ratatui = "0.27"
+crossterm = "0.28"
+# 中日韩字符在终端里占两列。算宽度和拼文本都要用它 ——
+# 按字符个数算会把中文排版算歪。
+unicode-width = "0.1"
+
+[[bin]]
+name = "jev-snake"
+path = "src/main.rs"
