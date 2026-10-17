@@ -441,6 +441,8 @@ mod tests {
             input_tokens: None,
             output_tokens: None,
             probabilities: Vec::new(),
+            from_plan: false,
+            retries: 0,
         });
         assert_eq!(
             app.game.direction(),
@@ -463,6 +465,8 @@ mod tests {
                 input_tokens: None,
                 output_tokens: None,
                 probabilities: Vec::new(),
+                from_plan: false,
+                retries: 0,
             });
         }
         let why = app.view.game_over.expect("第 18 步应该撞墙");

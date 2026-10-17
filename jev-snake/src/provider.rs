@@ -20,6 +20,11 @@ pub struct Move {
     /// 模型对每个方向的判断，按概率从大到小。算法源是空的 ——
     /// 它们本来就没有「分布」这回事，硬凑一个反而是撒谎。
     pub probabilities: Vec<(Direction, f32)>,
+    /// 这一步是「重放模型之前给的路线」，不是新问出来的。
+    /// 为 false 才代表真的付了一次网络往返。
+    pub from_plan: bool,
+    /// 拿到这一步重试了几次。
+    pub retries: u32,
 }
 
 /// 让模型选一步。
@@ -31,8 +36,7 @@ pub fn jev_decide(
     state: &GameState,
     legal: &[Direction],
 ) -> Result<Move, String> {
-    let encoded = JevSource::encode_state(state);
-    let d = client.decide(&encoded, legal).map_err(|e| {
+    let d = client.decide(state, legal).map_err(|e| {
         report_error(&e);
         e.to_string()
     })?;
@@ -45,6 +49,8 @@ pub fn jev_decide(
         input_tokens: d.input_tokens,
         output_tokens: d.output_tokens,
         probabilities,
+        from_plan: false,
+        retries: d.retries,
     })
 }
 
@@ -56,12 +62,24 @@ pub struct Stats {
     pub latencies_ms: Vec<f32>,
     pub input_tokens: u32,
     pub output_tokens: u32,
+    /// 真正付出的网络往返次数。和 `calls` 分开，才能量出「一次往返换几格」。
+    pub round_trips: u32,
+    /// 因为传输层失败而重试的总次数。上报出来，延迟统计含不含重试就一目了然。
+    pub retries: u32,
 }
 
 impl Stats {
     pub fn record(&mut self, latency_ms: f32) {
         self.calls += 1;
         self.latencies_ms.push(latency_ms);
+    }
+
+    /// 记录一步**没有联网**的决策（重放模型给的路线）。
+    ///
+    /// 只数步数，**不进延迟分布** —— 把 0 塞进延迟样本会把 p50 拉成 0，
+    /// 那是在说谎：这步不是「0 ms」，是「没花钱」。
+    pub fn record_local_step(&mut self) {
+        self.calls += 1;
     }
 
     /// 分位数：取第 `round((n-1) * p)` 个样本（0-based）。
@@ -136,6 +154,8 @@ impl DecisionSource for ConstantSource {
             input_tokens: None,
             output_tokens: None,
             probabilities: Vec::new(),
+            from_plan: false,
+            retries: 0,
         })
     }
 
@@ -195,16 +215,13 @@ fn body_after_move(state: &GameState, dir: Direction) -> HashSet<Point> {
     body
 }
 
-/// 算法基线。算法来自 elation 的 `bots/phantom_bot.rs`（BALANCED 档），
-/// 只保留了一个策略：
+/// 算法基线。洪水填充 + 贪心，只有一个策略：
 ///
 /// 1. 对每个合法方向算两件事 —— 离食物的曼哈顿距离，以及走完这步之后
 ///    蛇头还能到的空地面积（洪水填充）；
 /// 2. 面积不到最好那步的 1/4 的，是陷阱，丢掉；
 /// 3. 剩下的里挑离食物最近的那步。
 ///
-/// elation 那份还带 AGGRESSIVE / CAUTIOUS 两档人格（按 seed 选）——
-/// 那是玩法，不是这个实验要回答的问题，砍掉。
 pub struct GreedySource {
     stats: Stats,
 }
@@ -261,6 +278,8 @@ impl DecisionSource for GreedySource {
             input_tokens: None,
             output_tokens: None,
             probabilities: Vec::new(),
+            from_plan: false,
+            retries: 0,
         })
     }
 
@@ -280,10 +299,12 @@ impl DecisionSource for GreedySource {
 /// 把 `GameState` 发给 TypeSafe，让 Jev 选一步。
 ///
 /// 和算法源唯一的区别是 `choose()` 要过网络。其余一模一样 —— 这正是
-/// elation「引擎只接受 Direction」那条设计要兑现的东西。
+/// 「引擎只接受 Direction」那条设计要兑现的东西。
 pub struct JevSource {
     client: JevClient,
     stats: Stats,
+    /// 模型一次给了几步、还没走完的路线。`JEV_PLAN=1` 时这个队列永远是空的。
+    pending: std::collections::VecDeque<Direction>,
 }
 
 impl JevSource {
@@ -291,6 +312,7 @@ impl JevSource {
         Self {
             client,
             stats: Stats::default(),
+            pending: std::collections::VecDeque::new(),
         }
     }
 
@@ -298,14 +320,6 @@ impl JevSource {
         &self.client
     }
 
-    /// 发给模型的 `state` 字符串。`--dry-run` 打印的就是它。
-    pub fn encode_state(state: &GameState) -> String {
-        match serde_json::to_string(state) {
-            Ok(s) => s,
-            // 序列化 GameState 失败是编码 bug，不该让整局崩掉。
-            Err(e) => format!("state 编码失败: {e}"),
-        }
-    }
 }
 
 impl DecisionSource for JevSource {
@@ -314,9 +328,36 @@ impl DecisionSource for JevSource {
     }
 
     fn choose(&mut self, state: &GameState, legal: &[Direction]) -> Result<Move, String> {
+        // 还有没走完的路线，且下一步在当前棋盘上仍然合法 —— 就直接走，不联网。
+        // 这就是「一次往返换 N 格」的全部机制：往返次数不变，每步的边际成本变成 0。
+        if let Some(&next) = self.pending.front() {
+            if legal.contains(&next) {
+                self.pending.pop_front();
+                self.stats.record_local_step();
+                return Ok(Move {
+                    direction: next,
+                    latency_ms: 0.0,
+                    confidence: None,
+                    input_tokens: None,
+                    output_tokens: None,
+                    probabilities: Vec::new(),
+                    from_plan: true,
+                    retries: 0,
+                });
+            }
+            // 计划失效（吃过食物、身体变了）—— 丢掉剩下的，重新问。
+            self.pending.clear();
+        }
+
+        let horizon = self.client.config().plan_horizon;
+        if horizon > 1 {
+            return self.choose_with_plan(state, legal, horizon);
+        }
         match jev_decide(&self.client, state, legal) {
             Ok(m) => {
                 self.stats.record(m.latency_ms);
+                self.stats.round_trips += 1;
+                self.stats.retries += m.retries;
                 self.stats.input_tokens += m.input_tokens.unwrap_or(0);
                 self.stats.output_tokens += m.output_tokens.unwrap_or(0);
                 Ok(m)
@@ -334,6 +375,46 @@ impl DecisionSource for JevSource {
 
     fn stats_mut(&mut self) -> &mut Stats {
         &mut self.stats
+    }
+}
+
+impl JevSource {
+    fn choose_with_plan(
+        &mut self,
+        state: &GameState,
+        legal: &[Direction],
+        horizon: usize,
+    ) -> Result<Move, String> {
+        let plan = match self.client.plan(state, legal, horizon) {
+            Ok(p) => p,
+            Err(e) => {
+                report_error(&e);
+                return Err(e.to_string());
+            }
+        };
+        self.pending.clear();
+        for d in plan.directions.iter().skip(1) {
+            self.pending.push_back(*d);
+        }
+        let first = *plan
+            .directions
+            .first()
+            .expect("parse_plan_key 保证至少一步");
+        self.stats.record(plan.latency.as_secs_f32() * 1000.0);
+        self.stats.round_trips += 1;
+        self.stats.retries += plan.retries;
+        self.stats.input_tokens += plan.input_tokens.unwrap_or(0);
+        self.stats.output_tokens += plan.output_tokens.unwrap_or(0);
+        Ok(Move {
+            direction: first,
+            latency_ms: plan.latency.as_secs_f32() * 1000.0,
+            confidence: plan.confidence,
+            input_tokens: plan.input_tokens,
+            output_tokens: plan.output_tokens,
+            probabilities: Vec::new(),
+            from_plan: true,
+            retries: plan.retries,
+        })
     }
 }
 

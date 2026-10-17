@@ -1,14 +1,12 @@
 //! 贪吃蛇引擎 —— 只接受 `Direction`，不知道决策者是谁。
 //!
-//! 这一层是从 [elation](https://github.com/lunrenyi/elation) 的 `src/game.rs`
-//! 搬过来的，删掉了 UI 需要的字段（`best` / `length` / 暂停分支），并把
-//! elation 藏在 `ModelProvider::plan` 里的「合法方向」计算提到了这里，
-//! 让它成为**唯一**的合法性定义。
+//! 「什么方向合法」在这份代码里只有一处定义：`SnakeGame::legal_directions()`。
+//! 引擎（`tick`）和发给模型的选项列表读的是同一个函数。
 //!
-//! 为什么要提上来：elation 里引擎和 provider 各有一份「什么方向能走」
-//! （`SnakeGame::tick` 一份、`ModelProvider::plan` 一份），要靠人肉保证
-//! 一致。合并成一份之后，「发给模型的选项」和「引擎真正接受的」在类型上
-//! 就不可能对不上了。
+//! 为什么要坚持只有一处：这个项目的前身版本里，引擎和 provider 各有一份
+//! 「什么方向能走」的判断，要靠人肉保证它们永远一致。否则就会出现
+//! 「模型被要求选一个会自杀的方向」。合并成一份之后，
+//! 「发给模型的选项」和「引擎真正接受的」在类型上就不可能对不上了。
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -26,8 +24,7 @@ impl Point {
     }
 }
 
-/// 四个方向。JSON 上是全小写，和 elation 的 bot-sdk 协议保持一致 ——
-/// 为 elation 写过的 bot 换过来不用改。
+/// 四个方向。JSON 上是全小写，和贪吃蛇这套约定一致。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Direction {
@@ -95,8 +92,7 @@ pub struct BoardState {
 
 /// 决策源能看到的**唯一**东西。没有可变引用，拿不到引擎。
 ///
-/// 字段和 elation 的 bot-sdk 完全一致：`board / snake / food / direction /
-/// score / tick / seed`。
+/// 字段：`board / snake / food / direction / score / tick / seed`。
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GameState {
     pub board: BoardState,
@@ -150,9 +146,9 @@ impl GameOver {
 
 /// 确定性 PRNG（xorshift64*）。
 ///
-/// elation 用的是 `rand::StdRng`。这里换掉不是为了炫技 —— 这条实验的全部
-/// 价值都压在「同一个 seed 必然得到同一盘食物序列」上。自己写十几行，这个
-/// 契约就摆在文件里可读可测；交给 `rand` 的版本策略，跨大版本可能变。
+/// 不用 `rand` 不是为了炫技 —— 这条实验的全部价值都压在
+/// 「同一个 seed 必然得到同一盘食物序列」上。自己写十几行，这个契约就摆在
+/// 文件里可读可测；交给 `rand` 的版本策略，跨大版本可能变。
 #[derive(Debug, Clone)]
 pub struct Rng(u64);
 
@@ -368,8 +364,8 @@ mod tests {
     }
 
     #[test]
-    fn game_state_keeps_the_elation_bot_sdk_shape() {
-        // 少一个字段，为 elation 写过的 bot 就接不上 —— 所以逐个点名检查。
+    fn game_state_has_every_field_a_decision_source_needs() {
+        // 少一个字段，决策源就少一块上下文 —— 所以逐个点名检查。
         let state = GameState {
             board: BoardState {
                 width: 24,

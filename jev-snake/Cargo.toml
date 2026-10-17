@@ -2,13 +2,13 @@
 name = "jev-snake"
 version = "0.1.0"
 edition = "2021"
-description = "Jev 通过 TypeSafe /v1/systemone 结构化决策 API 驱动贪吃蛇 —— elation 实验的精简版"
+description = "Jev 通过 TypeSafe /v1/systemone 结构化决策 API 驱动贪吃蛇 —— 一条只量决策的测量台"
 license = "MIT"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-# 真实 API 走 HTTPS；本地 mock / proxy 走纯 HTTP，不需要它。
+# 真实 API 走 HTTPS（含走代理时的 CONNECT 隧道）；本地 mock 走纯 HTTP。
 native-tls = "0.2"
 # 可视化界面。只用两个 crate，不引主题 / 图标 / i18n 那一套。
 ratatui = "0.27"

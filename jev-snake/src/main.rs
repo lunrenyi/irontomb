@@ -1,8 +1,8 @@
 //! jev-snake 的测量台。
 //!
-//! 不画界面，只跑分。elation 那些屏幕、主题、字体、动画，全是为了**看**，
-//! 而这条实验要的是**量**：模型一步要多久、一步烧多少 token、它选的方向
-//! 和一把算术尺子差多少。看的东西留在原仓库，这里只留尺子。
+//! 不画界面，只跑分。屏幕、主题、字体、动画全是为了**看**，而这条实验要的是
+//! **量**：模型一步要多久、一步烧多少 token、它选的方向和一把算术尺子差多少。
+//! 界面只保留一块，围绕这条实验重画（见 README）。
 
 use jev_snake::app::{App, PlayConfig};
 use jev_snake::game::{GameOver, SnakeGame};
@@ -31,6 +31,8 @@ run / bench 选项:
     --height <N>                     棋盘高，默认 12
     --trace                          每一步都打出来
     --json                           输出 JSON
+    --dump <path>                    把每一次决策的原始记录写成 JSON（回答
+                                    「probabilities 有没有信息量」靠它）
     --on-error <stop|continue>       模型出错时停手还是沿用原方向，默认 stop
 
 play 选项:
@@ -59,6 +61,11 @@ mock 选项:
     TYPESAFE_MODEL       默认 jev-latest
     TYPESAFE_BASE_URL    默认 https://api.typesafe.ai
     TYPESAFE_TIMEOUT_MS  默认 3000
+    TYPESAFE_RETRIES     传输层失败时重试几次，默认 1，设 0 关掉
+    https_proxy 等        认 http_proxy / https_proxy / all_proxy / no_proxy
+    JEV_PROMPT_LANG      en（默认）| zh —— 2×2 对照实验用
+    JEV_STATE_KIND       object（默认）| string —— 2×2 对照实验用
+    JEV_PLAN             一次问几步。默认 1；3 = 一次问一条 3 步路线然后本地验着走
 ";
 
 fn main() {
@@ -99,6 +106,7 @@ struct Options {
     tps: f32,
     trace: bool,
     json: bool,
+    dump: String,
     stop_on_error: bool,
     tick: u32,
     mode: String,
@@ -118,6 +126,7 @@ impl Default for Options {
             tps: 8.0,
             trace: false,
             json: false,
+            dump: String::new(),
             stop_on_error: true,
             tick: 0,
             mode: "cycle".to_string(),
@@ -152,6 +161,7 @@ impl Options {
                 "--latency-ms" => o.latency_ms = next().parse().unwrap_or(0),
                 "--trace" => o.trace = true,
                 "--json" => o.json = true,
+                "--dump" => o.dump = next(),
                 "--on-error" => o.stop_on_error = next() != "continue",
                 other => eprintln!("忽略不认识的参数：{other}"),
             }
@@ -185,6 +195,12 @@ struct Summary {
     decisions_per_sec: f32,
     input_tokens: u32,
     output_tokens: u32,
+    /// 网络往返次数（重放计划里的步不算）。
+    round_trips: u32,
+    /// 传输层失败导致的重试次数。延迟统计**包含**这些重试。
+    retries: u32,
+    /// 一���往返换来几格。1 = 老老实实每步一问。
+    steps_per_round_trip: f32,
 }
 
 fn make_source(kind: &str) -> Result<Box<dyn DecisionSource>, String> {
@@ -200,9 +216,165 @@ fn make_source(kind: &str) -> Result<Box<dyn DecisionSource>, String> {
     }
 }
 
-/// 跑完一局，返回怎么收场的、计时、以及**每一次决策的原始延迟**。
+/// 一次决策的原始记录。留着是为了两件事：
+/// 1. 事后能重新分析，不用再烧一遍 token；
+/// 2. 「模型给的概率到底准不准」这种问题，只有逐条记录才答得出来。
+#[derive(Debug, Clone, Serialize)]
+struct DecisionRecord {
+    tick: u64,
+    score_before: u32,
+    head: [i32; 2],
+    food: [i32; 2],
+    legal: Vec<String>,
+    chosen: String,
+    confidence: Option<f32>,
+    /// 模型给**它自己选的那个方向**的概率。
+    p_chosen: Option<f32>,
+    probabilities: std::collections::BTreeMap<String, f32>,
+    latency_ms: f32,
+    /// 这一步吃到了食物。
+    ate_food: bool,
+    /// 这一步把蛇送死了（撞墙或撞自己）。
+    fatal: bool,
+}
+
+/// 「置信度能不能当门控」的答案。
+///
+/// 想法很简单：如果 `confidence` 真的有信息量，那么**高置信度的步应该更少撞死**。
+/// 所以对每个阈值 t 问两个问题：
+///
+/// - 过了 t 的步里，撞死的比例是多少？（precision）
+/// - 所有撞死的步里，有多少被 t 放过了？（recall）
+///
+/// 如果这两个数字几乎不随 t 变化，那这道门就是装饰。
+#[derive(Debug, Clone, Serialize)]
+struct Probe {
+    decisions: usize,
+    fatal_steps: usize,
+    ate_food: usize,
+    overall_fatal_rate: f32,
+    mean_p_chosen_survived: Option<f32>,
+    mean_p_chosen_fatal: Option<f32>,
+    mean_conf_survived: Option<f32>,
+    mean_conf_fatal: Option<f32>,
+    gate: Vec<GateRow>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct GateRow {
+    threshold: f32,
+    kept: usize,
+    fatal_among_kept: usize,
+    fatal_rate_among_kept: f32,
+    /// 所有撞死步里被放过的比例。
+    fatal_caught_ratio: f32,
+    /// 被放过的步里吃到食物的比例 —— 门控会不会把好事一起挡掉。
+    food_rate_among_kept: f32,
+}
+
+fn probe(records: &[DecisionRecord]) -> Probe {
+    let n = records.len();
+    let fatal = records.iter().filter(|r| r.fatal).count();
+    let ate = records.iter().filter(|r| r.ate_food).count();
+    let mean = |rs: &[&DecisionRecord], pick: fn(&DecisionRecord) -> Option<f32>| -> Option<f32> {
+        let v: Vec<f32> = rs.iter().filter_map(|r| pick(r)).collect();
+        if v.is_empty() {
+            None
+        } else {
+            Some(v.iter().sum::<f32>() / v.len() as f32)
+        }
+    };
+    let survived: Vec<&DecisionRecord> = records.iter().filter(|r| !r.fatal).collect();
+    let dead: Vec<&DecisionRecord> = records.iter().filter(|r| r.fatal).collect();
+
+    let mut gate = Vec::new();
+    for step in 0..=9 {
+        let t = step as f32 / 10.0;
+        let kept: Vec<&DecisionRecord> = records.iter().filter(|r| r.confidence.unwrap_or(1.0) >= t).collect();
+        if kept.is_empty() {
+            continue;
+        }
+        let fk = kept.iter().filter(|r| r.fatal).count();
+        gate.push(GateRow {
+            threshold: t,
+            kept: kept.len(),
+            fatal_among_kept: fk,
+            fatal_rate_among_kept: fk as f32 / kept.len() as f32,
+            fatal_caught_ratio: if fatal == 0 {
+                0.0
+            } else {
+                fk as f32 / fatal as f32
+            },
+            food_rate_among_kept: kept.iter().filter(|r| r.ate_food).count() as f32 / kept.len() as f32,
+        });
+    }
+
+    Probe {
+        decisions: n,
+        fatal_steps: fatal,
+        ate_food: ate,
+        overall_fatal_rate: if n == 0 { 0.0 } else { fatal as f32 / n as f32 },
+        mean_p_chosen_survived: mean(&survived, |r| r.p_chosen),
+        mean_p_chosen_fatal: mean(&dead, |r| r.p_chosen),
+        mean_conf_survived: mean(&survived, |r| r.confidence),
+        mean_conf_fatal: mean(&dead, |r| r.confidence),
+        gate,
+    }
+}
+
+fn print_probe(p: &Probe) {
+    println!("\n--- 概率 / 置信度探针 ---");
+    println!(
+        "决策 {} 步，其中撞死 {} 步（{:.1}%），吃到食物 {} 步",
+        p.decisions,
+        p.fatal_steps,
+        p.overall_fatal_rate * 100.0,
+        p.ate_food
+    );
+    let f = |v: Option<f32>| v.map(|x| format!("{x:.3}")).unwrap_or_else(|| "-".into());
+    println!(
+        "存活步平均 p_chosen={} / confidence={}；撞死步 p_chosen={} / confidence={}",
+        f(p.mean_p_chosen_survived),
+        f(p.mean_conf_survived),
+        f(p.mean_p_chosen_fatal),
+        f(p.mean_conf_fatal)
+    );
+    println!("\n阈值   留下步数  其中撞死  撞死率   放过撞死步  留下步里吃到食物");
+    for g in &p.gate {
+        println!(
+            "{:.1}    {:>6}    {:>6}    {:>6.1}%  {:>8.0}%      {:>6.1}%",
+            g.threshold,
+            g.kept,
+            g.fatal_among_kept,
+            g.fatal_rate_among_kept * 100.0,
+            g.fatal_caught_ratio * 100.0,
+            g.food_rate_among_kept * 100.0
+        );
+    }
+}
+
+/// 把探针结果**并进**已有的 JSON，而不是另起一个文档。
+///
+/// `jq` / `json.load` 只认一个顶层值。之前分成两段打印，看着像小问题，
+/// 结果对照脚本直接 `JSONDecodeError` —— 两次实验的数据白跑。
+fn json_with_probe<T: Serialize>(summary: &T, p: &Probe) -> String {
+    let mut obj = match serde_json::to_value(summary) {
+        Ok(serde_json::Value::Object(m)) => m,
+        _ => serde_json::Map::new(),
+    };
+    obj.insert(
+        "probe".to_string(),
+        serde_json::to_value(p).unwrap_or(serde_json::Value::Null),
+    );
+    serde_json::to_string_pretty(&serde_json::Value::Object(obj)).unwrap_or_default()
+}
+
+/// 跑完一局，返回怎么收场的、计时、**每一次决策的原始延迟**，以及逐条记录。
 /// 原始样本要留着 —— 跨局汇总只拿每局的 p50 再平均是没有意义的。
-fn play_one(opts: &Options, seed: u64) -> (GameOver, Summary, Vec<f32>) {
+fn play_one(
+    opts: &Options,
+    seed: u64,
+) -> (GameOver, Summary, Vec<f32>, Vec<DecisionRecord>) {
     let mut src = match make_source(&opts.source) {
         Ok(s) => s,
         Err(e) => {
@@ -219,6 +391,7 @@ fn play_one(opts: &Options, seed: u64) -> (GameOver, Summary, Vec<f32>) {
     let mut game = SnakeGame::new(opts.width, opts.height, seed);
     let started = Instant::now();
     let mut first_error: Option<String> = None;
+    let mut records: Vec<DecisionRecord> = Vec::new();
 
     let outcome = loop {
         if game.tick >= opts.ticks as u64 {
@@ -257,6 +430,8 @@ fn play_one(opts: &Options, seed: u64) -> (GameOver, Summary, Vec<f32>) {
                     input_tokens: None,
                     output_tokens: None,
                     probabilities: Vec::new(),
+                    from_plan: false,
+                    retries: 0,
                 }
             }
         };
@@ -282,8 +457,35 @@ fn play_one(opts: &Options, seed: u64) -> (GameOver, Summary, Vec<f32>) {
             );
         }
 
+        let score_before = game.score;
+        let probabilities: std::collections::BTreeMap<String, f32> = chosen
+            .probabilities
+            .iter()
+            .map(|(d, p)| (d.key().to_string(), *p))
+            .collect();
+        let p_chosen = probabilities.get(chosen.direction.key()).copied();
+        records.push(DecisionRecord {
+            tick: game.tick,
+            score_before,
+            head: [game.head().x, game.head().y],
+            food: [game.food().x, game.food().y],
+            legal: legal.iter().map(|d| d.key().to_string()).collect(),
+            chosen: chosen.direction.key().to_string(),
+            confidence: chosen.confidence,
+            p_chosen,
+            probabilities,
+            latency_ms: chosen.latency_ms,
+            ate_food: false, // 下面按真实结果回填
+            fatal: false,
+        });
+
         game.request_direction(chosen.direction);
-        if game.tick() {
+        let fatal = game.tick();
+        if let Some(r) = records.last_mut() {
+            r.ate_food = game.score > score_before;
+            r.fatal = fatal;
+        }
+        if fatal {
             break GameOver::Died {
                 tick: game.tick,
                 score: game.score,
@@ -316,8 +518,11 @@ fn play_one(opts: &Options, seed: u64) -> (GameOver, Summary, Vec<f32>) {
         decisions_per_sec: per_sec,
         input_tokens: stats.input_tokens,
         output_tokens: stats.output_tokens,
+        round_trips: stats.round_trips,
+        retries: stats.retries,
+        steps_per_round_trip: stats.calls as f32 / stats.round_trips.max(1) as f32,
     };
-    (outcome, summary, stats.latencies_ms.clone())
+    (outcome, summary, stats.latencies_ms.clone(), records)
 }
 
 fn ms(v: Option<f32>) -> String {
@@ -378,13 +583,22 @@ fn cmd_run(opts: &Options) -> i32 {
         if opts.source == "jev" {
             let cfg = jev::JevConfig::from_env();
             println!(
-                "端点：{}   model={}   key={}",
+                "端点：{}   model={}   key={}   提问={}   state={}   JEV_PLAN={}",
                 cfg.endpoint(),
                 cfg.model,
                 match cfg.api_key {
                     Some(_) => "已设置",
                     None => "未设置",
-                }
+                },
+                match cfg.prompt_lang {
+                    jev::PromptLang::En => "英文",
+                    jev::PromptLang::Zh => "中文",
+                },
+                match cfg.state_kind {
+                    jev::StateKind::Object => "对象",
+                    jev::StateKind::String => "字符串",
+                },
+                cfg.plan_horizon,
             );
         }
         if opts.trace {
@@ -392,13 +606,17 @@ fn cmd_run(opts: &Options) -> i32 {
         }
     }
 
-    let (outcome, summary, _latencies) = play_one(opts, opts.seed);
+    let (outcome, summary, _latencies, records) = play_one(opts, opts.seed);
+
+    if !opts.dump.is_empty() {
+        match std::fs::write(&opts.dump, serde_json::to_string_pretty(&records).unwrap_or_default()) {
+            Ok(()) => eprintln!("逐条决策记录已写到 {}", opts.dump),
+            Err(e) => eprintln!("写 dump 失败：{e}"),
+        }
+    }
 
     if opts.json {
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&summary).unwrap_or_default()
-        );
+        println!("{}", json_with_probe(&summary, &probe(&records)));
         return if summary.errors > 0 { 1 } else { 0 };
     }
 
@@ -407,17 +625,23 @@ fn cmd_run(opts: &Options) -> i32 {
     println!("得分          {}", summary.score);
     println!("步数          {}", summary.ticks);
     println!("决策次数      {}", summary.decisions);
+    println!("网络往返      {}", summary.round_trips);
+    println!("每次往返换    {:.2} 格", summary.steps_per_round_trip);
     println!("决策延迟 p50  {}", ms(summary.latency_p50_ms));
     println!("决策延迟 p95  {}", ms(summary.latency_p95_ms));
     println!("墙钟耗时      {} ms", summary.wall_ms);
     println!("每秒决策      {:.1} 次", summary.decisions_per_sec);
     println!("错误次数      {}", summary.errors);
+    println!("传输层重试    {}", summary.retries);
     println!(
         "token         输入 {} / 输出 {}",
         summary.input_tokens, summary.output_tokens
     );
     if let Some(e) = &summary.first_error {
         println!("首次错误      {}", e.lines().next().unwrap_or(e));
+    }
+    if opts.source == "jev" {
+        print_probe(&probe(&records));
     }
 
     i32::from(summary.errors > 0)
@@ -461,10 +685,12 @@ fn cmd_bench(opts: &Options) -> i32 {
     let mut input_tokens = 0u32;
     let mut output_tokens = 0u32;
     let mut first_error: Option<String> = None;
+    let mut all_records: Vec<DecisionRecord> = Vec::new();
 
     for n in 0..opts.seeds {
         let seed = opts.seed + n as u64;
-        let (outcome, s, latencies) = play_one(opts, seed);
+        let (outcome, s, latencies, recs) = play_one(opts, seed);
+        all_records.extend(recs);
         plays += 1;
         scores.push(s.score);
         ticks.push(outcome.tick() as u32);
@@ -528,10 +754,7 @@ fn cmd_bench(opts: &Options) -> i32 {
         wall_ms: started.elapsed().as_millis(),
     };
     if opts.json {
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&bench).unwrap_or_default()
-        );
+        println!("{}", json_with_probe(&bench, &probe(&all_records)));
     } else {
         println!("\n--- {} 个 seed 的汇总 ---", bench.seeds);
         println!("跑满          {} / {}", bench.games_finished, bench.games_played);
@@ -549,6 +772,16 @@ fn cmd_bench(opts: &Options) -> i32 {
         println!("墙钟耗时      {} ms", bench.wall_ms);
         if let Some(e) = &first_error {
             println!("首次错误      {}", e.lines().next().unwrap_or(e));
+        }
+        if opts.source == "jev" {
+            print_probe(&probe(&all_records));
+        }
+    }
+
+    if !opts.dump.is_empty() {
+        match std::fs::write(&opts.dump, serde_json::to_string_pretty(&all_records).unwrap_or_default()) {
+            Ok(()) => eprintln!("逐条决策记录已写到 {}", opts.dump),
+            Err(e) => eprintln!("写 dump 失败：{e}"),
         }
     }
 
@@ -571,9 +804,11 @@ fn cmd_protocol(opts: &Options) -> i32 {
     }
     let legal = game.legal_directions();
     let state = game.snapshot();
-    let encoded = JevSource::encode_state(&state);
     let model = jev::JevConfig::from_env().model;
-    let (_, pretty) = jev::build_request(&encoded, &legal, &model);
+    let cfg = jev::JevConfig::from_env();
+    let pretty = jev::build_request(&state, &legal, &model, cfg.prompt_lang, cfg.state_kind)
+        .map(|(_, p)| p)
+        .unwrap_or_else(|e| format!("构造请求失败：{e}"));
 
     println!("端点：POST {}", jev::JevConfig::from_env().endpoint());
     println!("模型：{model}");
@@ -619,5 +854,128 @@ fn cmd_mock(opts: &Options) -> i32 {
     println!("Ctrl-C 结束。");
     loop {
         std::thread::sleep(std::time::Duration::from_millis(500));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn rec(conf: Option<f32>, p: Option<f32>, fatal: bool, ate: bool) -> DecisionRecord {
+        DecisionRecord {
+            tick: 0,
+            score_before: 0,
+            head: [0, 0],
+            food: [1, 1],
+            legal: vec!["up".into()],
+            chosen: "up".into(),
+            confidence: conf,
+            p_chosen: p,
+            probabilities: Default::default(),
+            latency_ms: 1.0,
+            ate_food: ate,
+            fatal,
+        }
+    }
+
+    #[test]
+    fn a_gate_that_works_would_lower_the_fatal_rate_among_kept_steps() {
+        // 造一个「置信度真的有用」的世界：撞死的步置信度都低。
+        let rs = vec![
+            rec(Some(0.9), Some(0.9), false, false),
+            rec(Some(0.8), Some(0.8), false, false),
+            rec(Some(0.2), Some(0.2), true, false),
+            rec(Some(0.1), Some(0.1), true, false),
+        ];
+        let p = probe(&rs);
+        assert_eq!(p.decisions, 4);
+        assert_eq!(p.fatal_steps, 2);
+        assert_eq!(p.overall_fatal_rate, 0.5);
+
+        // 阈值 0.5 应该把两个撞死的步都挡掉，且不留下的全是致命步。
+        let g = p.gate.iter().find(|g| g.threshold == 0.5).unwrap();
+        assert_eq!(g.kept, 2, "只有两个高置信度的步该活下来");
+        assert_eq!(g.fatal_among_kept, 0);
+        assert_eq!(g.fatal_rate_among_kept, 0.0);
+
+        // 0 阈值等于不过门。
+        let g0 = p.gate.iter().find(|g| g.threshold == 0.0).unwrap();
+        assert_eq!(g0.kept, 4);
+        assert!((g0.fatal_rate_among_kept - 0.5).abs() < 1e-6);
+    }
+
+    #[test]
+    fn a_gate_that_does_nothing_shows_a_flat_fatal_rate() {
+        // 造一个「置信度毫无信息量」的世界：置信度均匀铺开，撞不撞死和它无关。
+        // 样本要够多 —— 4 条数据里任何模式看着都像信号。
+        let rs: Vec<DecisionRecord> = (0..100)
+            .map(|i| rec(Some(i as f32 / 100.0), Some(i as f32 / 100.0), i % 2 == 0, false))
+            .collect();
+        let p = probe(&rs);
+        let rates: Vec<f32> = p.gate.iter().map(|g| g.fatal_rate_among_kept).collect();
+        for r in &rates {
+            assert!(
+                (*r - 0.5).abs() < 0.25,
+                "没有信息量的话，各阈值下的撞死率都该在 0.5 附近，实际 {rates:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn steps_without_confidence_are_not_silently_treated_as_zero() {
+        // 没拿到 confidence 的步不能被阈值 0.2 之类的门挡掉 —— 那是在
+        // 用「我们没数据」冒充「模型很不确定」。
+        let rs = vec![
+            rec(None, None, false, false),
+            rec(Some(0.1), Some(0.1), true, false),
+        ];
+        let p = probe(&rs);
+        let g = p.gate.iter().find(|g| g.threshold == 0.5).unwrap();
+        assert_eq!(g.kept, 1, "没有置信度的步默认保留");
+        assert_eq!(g.fatal_among_kept, 0);
+    }
+
+    #[test]
+    fn an_empty_run_probes_cleanly_instead_of_dividing_by_zero() {
+        let p = probe(&[]);
+        assert_eq!(p.decisions, 0);
+        assert_eq!(p.overall_fatal_rate, 0.0);
+        assert!(p.gate.is_empty());
+        assert!(p.mean_p_chosen_survived.is_none());
+        // 不 panic 就够了。
+        print_probe(&p);
+    }
+
+    #[test]
+    fn json_output_is_one_document_not_two() {
+        // 曾经把探针另起一段打印，结果 jq / json.load 直接报 Extra data ——
+        // 对照脚本整个挂掉，两次实验白跑。顶层必须是且只有一个 JSON 值。
+        let s = Summary {
+            source: "model/Jev".into(),
+            endpoint: "-".into(),
+            seed: 42,
+            board: "24x12".into(),
+            outcome: "ticks-exhausted".into(),
+            ticks: 30,
+            score: 2,
+            decisions: 30,
+            errors: 0,
+            first_error: None,
+            latency_p50_ms: Some(840.0),
+            latency_p95_ms: Some(900.0),
+            latency_mean_ms: Some(845.0),
+            wall_ms: 25_000,
+            decisions_per_sec: 1.2,
+            input_tokens: 10,
+            output_tokens: 5,
+            round_trips: 30,
+            retries: 2,
+            steps_per_round_trip: 1.0,
+        };
+        let text = json_with_probe(&s, &probe(&[rec(Some(0.5), Some(0.5), false, false)]));
+        let v: serde_json::Value = serde_json::from_str(&text).expect("必须是一个完整 JSON");
+        assert_eq!(v["score"], 2, "原有字段要还在原来的位置");
+        assert!(v["probe"].is_object(), "探针并进同一个对象");
+        assert_eq!(v["probe"]["decisions"], 1);
     }
 }

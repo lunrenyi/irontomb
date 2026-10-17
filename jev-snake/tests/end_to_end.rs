@@ -1,13 +1,15 @@
 //! 端到端：不用 key、不用网，把整条路跑通。
 //!
-//! 这是这个项目存在的理由。elation 那边的 `tests/jev_real_api.rs` 在没有
-//! `TYPESAFE_API_KEY` 时会直接 return 跳过 —— 也就是说**这条实验的核心路径
-//! 在 CI 上从来没被验证过**。这里让它每次 `cargo test` 都跑一遍。
+//! 这是这个项目存在的理由。一个常见的写法是：真实 API 的测试在没有
+//! `TYPESAFE_API_KEY` 时直接 `return` 跳过 —— 也就是说**这条实验的核心路径
+//! 在 CI 上从来没被验证过**，而测试却是绿的。这里让它每次 `cargo test`
+//! 都能真跑一遍（本地 mock 服务，不联网）。
 
 use jev_snake::game::{Direction, GameState, SnakeGame};
 use jev_snake::jev::{JevClient, JevConfig, JevError};
 use jev_snake::mock::{MockJev, Reply};
 use jev_snake::provider::{DecisionSource, GreedySource, JevSource};
+use jev_snake::proxy::ProxySetting;
 use std::time::{Duration, Instant};
 
 fn config_for(base_url: &str) -> JevConfig {
@@ -16,6 +18,13 @@ fn config_for(base_url: &str) -> JevConfig {
         api_key: Some("dummy-key-for-tests".to_string()),
         model: "jev-latest".to_string(),
         timeout: Duration::from_secs(5),
+        // 本地 mock 永远钉死直连。测试不该继承调用者的环境 ——
+        // 否则你一 export https_proxy，这些用例就全红了。
+        proxy: ProxySetting::Direct,
+        prompt_lang: Default::default(),
+        state_kind: Default::default(),
+        plan_horizon: 1,
+        retries: 0,
     }
 }
 
@@ -72,7 +81,7 @@ fn what_we_send_only_advertises_moves_the_engine_would_accept() {
         }
         let state = game.snapshot();
         let decision = client
-            .decide(&JevSource::encode_state(&state), &legal)
+            .decide(&state, &legal)
             .expect("不该失败");
         assert!(legal.contains(&decision.direction));
 
@@ -89,10 +98,13 @@ fn what_we_send_only_advertises_moves_the_engine_would_accept() {
             assert!(criteria.contains_key(&key), "请求里少了合法方向 {key}");
         }
 
-        // state 字段必须能还原成同一盘棋。
+        // state 必须是一个**对象**（文档推荐这样），而且能还原成同一盘棋。
+        assert!(
+            parsed["state"].is_object(),
+            "state 应该直接是 JSON 对象，不是套了一层字符串"
+        );
         let sent_state: GameState =
-            serde_json::from_str(parsed["state"].as_str().expect("state 是字符串"))
-                .expect("state 必须是合法 GameState");
+            serde_json::from_value(parsed["state"].clone()).expect("state 必须是合法 GameState");
         assert_eq!(sent_state, state, "发出去的棋局和引擎里的不一致");
 
         game.request_direction(decision.direction);
@@ -110,7 +122,7 @@ fn a_hallucinated_direction_is_refused_not_obeyed() {
     let game = SnakeGame::new(24, 12, 3);
     let legal = [Direction::Up, Direction::Right]; // left 是幻觉
     let err = client
-        .decide(&JevSource::encode_state(&game.snapshot()), &legal)
+        .decide(&game.snapshot(), &legal)
         .unwrap_err();
     assert!(
         matches!(err, JevError::Invalid(_)),
@@ -129,10 +141,7 @@ fn the_regional_block_is_reported_as_a_block_not_a_crash() {
     let client = JevClient::new(config_for(&mock.base_url()));
     let game = SnakeGame::new(24, 12, 3);
     let err = client
-        .decide(
-            &JevSource::encode_state(&game.snapshot()),
-            &[Direction::Up, Direction::Right],
-        )
+        .decide(&game.snapshot(), &[Direction::Up, Direction::Right])
         .unwrap_err();
     assert!(
         matches!(err, JevError::Http { status: 451, .. }),
@@ -147,7 +156,7 @@ fn a_garbage_body_is_an_error_not_a_panic() {
     let client = JevClient::new(config_for(&mock.base_url()));
     let game = SnakeGame::new(24, 12, 3);
     let err = client
-        .decide(&JevSource::encode_state(&game.snapshot()), &[Direction::Up])
+        .decide(&game.snapshot(), &[Direction::Up])
         .unwrap_err();
     assert!(matches!(err, JevError::Invalid(_)), "实际是 {err}");
 }
@@ -161,11 +170,16 @@ fn missing_api_key_never_reaches_the_network() {
         api_key: None,
         model: "jev-latest".to_string(),
         timeout: Duration::from_millis(500),
+        proxy: ProxySetting::Direct,
+        prompt_lang: Default::default(),
+        state_kind: Default::default(),
+        plan_horizon: 1,
+        retries: 0,
     };
     let client = JevClient::new(cfg);
     let game = SnakeGame::new(24, 12, 3);
     let err = client
-        .decide(&JevSource::encode_state(&game.snapshot()), &[Direction::Up])
+        .decide(&game.snapshot(), &[Direction::Up])
         .unwrap_err();
     assert_eq!(err, JevError::NotConfigured);
 }
@@ -188,10 +202,7 @@ fn injected_latency_shows_up_in_the_wall_clock() {
     let game = SnakeGame::new(24, 12, 1);
     let started = Instant::now();
     let decision = client
-        .decide(
-            &JevSource::encode_state(&game.snapshot()),
-            &game.legal_directions(),
-        )
+            .decide(&game.snapshot(), &game.legal_directions())
         .expect("不该失败");
     let elapsed = started.elapsed();
     assert!(
