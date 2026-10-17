@@ -5,7 +5,7 @@ import { ChipButton, GhostButton, PlaybackBar, PlayButton, cx } from './ui'
 import { Formula } from './Math'
 import { EULER_FORMULA_TEX } from '../content'
 import { PI, SPECIAL_ANGLES, TAU, formatNumber, formatPoint } from '../lib/math'
-import { complexTex, eIPowThetaTex, thetaTex } from '../lib/format'
+import { complexTex, eIPowThetaTex, formatComponent, thetaTex } from '../lib/format'
 import { rotationStore, tweenToTheta, useRotation } from '../state/rotationStore'
 
 const NARRATION = [
@@ -102,8 +102,8 @@ function Readout() {
       </div>
 
       <div className='mt-5 grid grid-cols-3 gap-3 text-center'>
-        <Value label='cos θ' value={formatNumber(cos, 3)} tone='text-vector' />
-        <Value label='sin θ' value={formatNumber(sin, 3)} tone='text-imag' />
+        <Value label='cos θ' value={formatComponent(cos)} tone='text-vector' />
+        <Value label='sin θ' value={formatComponent(sin)} tone='text-imag' />
         <Value label='坐标 (x, y)' value={formatPoint(theta, 2)} tone='text-paper' small />
       </div>
 

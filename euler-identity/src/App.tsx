@@ -1,17 +1,46 @@
 import { BackgroundField } from './components/BackgroundField'
 import { StoryNav } from './components/StoryNav'
-import { HeroScene } from './components/HeroScene'
-import { GrowthScene } from './components/GrowthScene'
-import { ComplexPlaneScene } from './components/ComplexPlaneScene'
+import { FilmPlayer } from './components/FilmPlayer'
 import { RotationLab } from './components/RotationLab'
-import { SpecialAngleScene } from './components/SpecialAngleScene'
-import { CancellationScene } from './components/CancellationScene'
-import { ConstantsScene } from './components/ConstantsScene'
+import { ConstantsStrip } from './components/ConstantsStrip'
 import { QuizSection } from './components/QuizSection'
+import { GrowthScene } from './components/GrowthScene'
 import { Formula } from './components/Math'
-import { NextCue, Section, SectionHeading } from './components/ui'
-import { EULER_FORMULA_TEX, EULER_IDENTITY_TEX } from './content'
+import { NextCue, Section } from './components/ui'
+import { EULER_FORMULA_TEX, EULER_IDENTITY_TEX, HERO_QUESTION } from './content'
+import { seekFilm } from './story/playerBus'
+import { FPS, SCENES, TOTAL_SECONDS } from './story/timeline'
 import { useAutoRotationEngine } from './state/rotationStore'
+import { useState } from 'react'
+
+const HALF_TURN = SCENES.find((scene) => scene.id === 'halfturn')
+const CANCEL = SCENES.find((scene) => scene.id === 'cancel')
+
+/** 旁注：展开时才挂载增长场景，免得它在折叠状态下空跑动画 */
+function GrowthNote() {
+  const [open, setOpen] = useState(false)
+  return (
+    <details
+      className='group mt-12 border-t border-muted/12 pt-6'
+      onToggle={(event) => setOpen((event.currentTarget as HTMLDetailsElement).open)}
+    >
+      <summary className='flex cursor-pointer list-none items-center gap-3 text-sm text-muted transition-colors hover:text-paper'>
+        <span className='font-mono text-[10px] text-faint'>附注</span>
+        <span>e 是怎么来的？一条不断翻倍的增长曲线</span>
+        <span className='text-faint transition-transform group-open:rotate-90' aria-hidden='true'>
+          ›
+        </span>
+      </summary>
+      <div className='mt-8'>
+        <p className='mb-6 max-w-[54ch] text-[15px] leading-relaxed text-muted'>
+          e 是自然指数里最重要的常数：任何「每过一小段时间就按比例多一点点」的过程，最后都会遇到它。
+          注意这只是对 e 的直觉认识——影片里欧拉公式的 e 出现在指数位置，转动时长度并不会变大。
+        </p>
+        {open ? <GrowthScene /> : null}
+      </div>
+    </details>
+  )
+}
 
 export default function App() {
   // 自动旋转引擎全局只挂一个 rAF 循环
@@ -23,199 +52,150 @@ export default function App() {
       <StoryNav />
 
       <main className='relative z-10'>
-        <HeroScene />
-
-        <Section id='growth' className='mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-6'>
-          <SectionHeading
-            kicker='第一站'
-            title='认识 e：一个关于增长的数字'
-            lead={
-              <>
-                在讲公式之前，先给 e 一张面孔。它不需要微积分，只需要一个直觉：
-                <span className='text-paper'>按比例持续增长下去时，那个反复出现的常数。</span>
-              </>
-            }
-          />
-          <div className='mt-12'>
-            <GrowthScene />
+        {/* 影片即首页：文字只留一句提问 */}
+        <Section id='film' className='mx-auto w-full max-w-[1240px] px-4 pb-16 pt-20 sm:px-6 sm:pb-20 sm:pt-24'>
+          <div className='flex flex-wrap items-end justify-between gap-x-8 gap-y-3'>
+            <h1 className='font-display text-[clamp(1.6rem,4.6vw,2.9rem)] leading-tight text-paper'>
+              欧拉恒等式
+              <span className='ml-3 align-middle font-mono text-[clamp(0.72rem,1.5vw,0.95rem)] tracking-[0.28em] text-muted'>
+                EULER FILM
+              </span>
+            </h1>
+            <p className='max-w-[34ch] text-sm leading-relaxed text-muted'>{HERO_QUESTION}</p>
           </div>
-          <div className='mt-12'>
-            <NextCue target='imaginary' label='继续：数字世界还缺一个方向' />
+
+          <div className='mt-5'>
+            <FilmPlayer />
+          </div>
+
+          <div className='mt-6 flex flex-wrap items-center gap-x-6 gap-y-3'>
+            <a
+              href='#lab'
+              className='inline-flex items-center gap-2 rounded-full bg-paper px-5 py-2.5 text-sm font-semibold text-ink-950 transition-transform duration-200 hover:scale-[1.03] active:scale-95'
+            >
+              跳过影片，直接转圆 ↓
+            </a>
+            <span className='text-[13px] leading-relaxed text-muted'>
+              影片约 {Math.round(TOTAL_SECONDS)} 秒 · 无配音 · 也可以用 npm run export:mp4 导出成 MP4
+            </span>
           </div>
         </Section>
 
-        <Section id='imaginary' className='mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-6'>
-          <SectionHeading
-            kicker='第二站'
-            title='认识 i：数字世界多出一个方向'
-            lead={
-              <>
-                数轴上的数字只能向左或向右。i 的作用，是让数字有了第二个方向——
-                <span className='text-paper'>把数轴立起来，就得到复平面。</span>
-              </>
-            }
-          />
-          <div className='mt-12'>
-            <ComplexPlaneScene />
-          </div>
-          <div className='mt-10 grid gap-5 text-[15px] leading-relaxed text-muted sm:grid-cols-2'>
-            <p className='glass-panel rounded-2xl p-5'>
-              <span className='text-paper'>复数长什么样？</span>
-              <br />
-              写成 a + bi：a 是实方向的部分，b 是虚方向的部分。我们用
-              <Formula tex='(a,\ b)' className='text-paper' label='坐标 a, b' />
-              来标记平面上的位置——也就是一对坐标。
-            </p>
-            <p className='glass-panel rounded-2xl p-5'>
-              <span className='text-paper'>乘法在做什么？</span>
-              <br />
-              乘以一个复数，相当于把向量旋转并缩放；只乘以 i 时，缩放恰好为 1，
-              <span className='text-imag'>剩下的效果就是转 90°</span>。
+        {/* 互动实验室：影片里的圆，现在交给你 */}
+        <Section id='lab' className='mx-auto w-full max-w-[1240px] px-4 py-20 sm:px-6'>
+          <div className='flex flex-wrap items-end justify-between gap-x-8 gap-y-4'>
+            <div>
+              <p className='text-xs uppercase tracking-[0.3em] text-vector'>互动实验室</p>
+              <h2 className='mt-2 font-display text-[clamp(1.4rem,3.4vw,2.1rem)] text-paper'>现在轮到你转动这个圆</h2>
+            </div>
+            <p className='max-w-[38ch] text-[15px] leading-relaxed text-muted'>
+              拖动圆周上的点：横坐标是 cos θ，纵坐标是 sin θ。两者不是两套信息，而是同一个角度的两种读法。
             </p>
           </div>
-          <div className='mt-12'>
-            <NextCue target='rotation' label='继续：轮到你亲手转起来' />
-          </div>
-        </Section>
 
-        <Section id='rotation' className='mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-6'>
-          <SectionHeading
-            kicker='互动实验室'
-            title='把角度握在手里'
-            lead={
-              <>
-                这是整站的核心实验。拖动圆周上的点，看单位圆上的坐标
-                <Formula tex='(\cos\theta,\ \sin\theta)' className='text-paper' label='cos θ, sin θ' />
-                怎样跟着角度一起变化——它们不是两套信息，
-                <span className='text-paper'>而是同一个角度的两种读法。</span>
-              </>
-            }
-          />
-          <div className='mt-12'>
+          <div className='mt-10'>
             <RotationLab />
           </div>
-          <div className='mt-10 rounded-2xl border border-muted/12 bg-ink-950/40 px-5 py-4 text-[15px] leading-relaxed text-muted'>
-            <span className='text-vector'>欧拉公式：</span>
-            <Formula tex={EULER_FORMULA_TEX} className='mx-1 text-paper' label='e 的 i 次方 θ 等于 cos θ 加 i sin θ' />
-            <br className='sm:hidden' />
-            <span className='text-muted'>它说的是：单位圆上的点走到角度 θ 时，它的实部是 cos θ，虚部是 sin θ。</span>
-          </div>
-          <div className='mt-12'>
-            <NextCue target='special' label='继续：让角度停在 π' />
+
+          <div className='mt-10 flex flex-wrap items-center gap-x-6 gap-y-3'>
+            {HALF_TURN ? (
+              <button
+                type='button'
+                onClick={() => {
+                  seekFilm(HALF_TURN.start)
+                  document.getElementById('film')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }}
+                className='inline-flex items-center gap-2 rounded-full border border-muted/25 px-4 py-2 text-[13px] text-muted transition-colors hover:border-vector/60 hover:text-vector'
+              >
+                <span aria-hidden='true'>↑</span> 回影片 {Math.round(HALF_TURN.start / FPS)} 秒，看点自己转过半圈
+              </button>
+            ) : null}
+            <NextCue target='constants' label='继续：五个常数重新登场' />
           </div>
         </Section>
 
-        <Section id='special' className='mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-6'>
-          <SectionHeading
-            kicker='第三站'
-            title='π 是关键的那一半'
-            lead={
-              <>
-                π 不只是一个数字：它同时是一个角度。
-                <span className='text-paper'>在单位圆上转 π 弧度，正好是半圈。</span>
-                接下来我们把点转到 π，再用公式把结果一步步算出来。
-              </>
-            }
-          />
-          <div className='mt-12'>
-            <SpecialAngleScene />
+        {/* 五个常数 */}
+        <Section id='constants' className='mx-auto w-full max-w-[1240px] px-4 py-20 sm:px-6'>
+          <p className='text-xs uppercase tracking-[0.3em] text-node'>回顾</p>
+          <h2 className='mt-2 font-display text-[clamp(1.4rem,3.4vw,2.1rem)] text-paper'>五个角色，一张合影</h2>
+          <div className='mt-8'>
+            <ConstantsStrip />
           </div>
-          <div className='mt-12'>
-            <NextCue target='cancellation' label='继续：为什么最后是 0' />
-          </div>
-        </Section>
 
-        <Section id='cancellation' className='mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-6'>
-          <SectionHeading
-            kicker='第四站'
-            title='为什么最后是 0'
-            lead={
-              <>
-                我们已经得到
-                <Formula tex='e^{i\\pi} = -1' className='mx-1 text-vector' label='e 的 i 次方 π 等于负 1' />
-                。剩下的问题只有一个：为什么再加上 1，会得到 0？
-              </>
-            }
-          />
-          <div className='mt-12'>
-            <CancellationScene />
-          </div>
-          <div className='mt-12'>
-            <NextCue target='constants' label='继续：五个角色，一张合影' />
-          </div>
-        </Section>
+          {/* 旁注：e 的增长直觉，收在可展开的区域里，不打断主线 */}
+          <GrowthNote />
 
-        <Section id='constants' className='mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-6'>
-          <SectionHeading
-            kicker='第五站'
-            title='五个常数，重新站到一起'
-            lead='点一点每个符号，回想它在整条故事里做过的事。'
-            align='center'
-          />
           <div className='mt-12'>
-            <ConstantsScene />
-          </div>
-          <div className='mt-12 flex justify-center'>
             <NextCue target='quiz' label='继续：轮到你来猜' />
           </div>
         </Section>
 
-        <Section id='quiz' className='mx-auto w-full max-w-[1240px] px-5 py-24 sm:px-6'>
-          <SectionHeading
-            kicker='互动挑战'
-            title='轮到你来猜'
-            lead='三个小问题，答错也没关系——每个选项都会告诉你为什么。'
-            align='center'
-          />
-          <div className='mt-12'>
+        {/* 挑战 + 收束 */}
+        <Section id='quiz' className='mx-auto w-full max-w-[1240px] px-4 py-20 sm:px-6'>
+          <p className='text-xs uppercase tracking-[0.3em] text-imag'>互动挑战</p>
+          <h2 className='mt-2 font-display text-[clamp(1.4rem,3.4vw,2.1rem)] text-paper'>三个问题，猜猜看</h2>
+          <div className='mt-8'>
             <QuizSection />
           </div>
 
-          <div className='mt-20 rounded-3xl border border-muted/12 bg-ink-900/50 px-6 py-10 text-center sm:px-10'>
-            <p className='text-xs uppercase tracking-[0.3em] text-muted'>整段旅程的结论</p>
-            <Formula               tex={EULER_IDENTITY_TEX}
+          <div className='mt-20 border-t border-muted/12 pt-14 text-center'>
+            <Formula
+              tex={EULER_IDENTITY_TEX}
               display
-              className='mt-4 text-[clamp(1.8rem,7vw,3.4rem)] text-result breathe'
+              className='text-[clamp(2rem,9vw,4.2rem)] text-result breathe'
               label='欧拉恒等式：e 的 i 次方 π 加 1 等于 0'
             />
-            <p className='mx-auto mt-6 max-w-[46ch] text-[15px] leading-relaxed text-muted'>
-              e 提供指数式的增长，i 提供一个垂直方向，π 指定转半圈，
-              1 是要与 -1 相加的正数，0 则是抵消之后剩下的东西。
-              <span className='text-paper'>这就是为什么它们会出现在同一个式子里。</span>
+            <p className='mx-auto mt-6 max-w-[42ch] text-[15px] leading-relaxed text-muted'>
+              e 提供指数式的增长，i 提供第二个方向，π 指定半圈，1 是要与 -1 相加的正数，0 是抵消之后剩下的东西。
             </p>
+
             <div className='mt-8 flex flex-wrap items-center justify-center gap-3'>
-              <a
-                href='#hero'
-                className='inline-flex items-center gap-2 rounded-full bg-paper px-5 py-2.5 text-sm font-semibold text-ink-950 transition-transform hover:scale-[1.03] active:scale-95'
+              <button
+                type='button'
+                onClick={() => {
+                  seekFilm(0)
+                  document.getElementById('film')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                }}
+                className='inline-flex items-center gap-2 rounded-full bg-paper px-5 py-2.5 text-sm font-semibold text-ink-950 transition-transform duration-200 hover:scale-[1.03] active:scale-95'
               >
-                重新体验 ↑
-              </a>
+                重新观看影片 ↑
+              </button>
               <a
-                href='#rotation'
+                href='#lab'
                 className='inline-flex items-center gap-2 rounded-full border border-muted/25 px-5 py-2.5 text-sm text-muted transition-colors hover:border-paper/50 hover:text-paper'
               >
-                回到互动实验室
+                回到实验室
               </a>
+              {CANCEL ? (
+                <button
+                  type='button'
+                  onClick={() => {
+                    seekFilm(CANCEL.start)
+                    document.getElementById('film')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
+                  className='inline-flex items-center gap-2 rounded-full border border-muted/25 px-5 py-2.5 text-sm text-muted transition-colors hover:border-paper/50 hover:text-paper'
+                >
+                  只看抵消那一场
+                </button>
+              ) : null}
             </div>
           </div>
         </Section>
       </main>
 
       <footer className='relative z-10 border-t border-muted/10 py-10'>
-        <div className='mx-auto w-full max-w-[1240px] px-5 text-xs leading-relaxed text-faint sm:px-6'>
-          <p className='max-w-[70ch]'>
-            术语说明：一般形式
-            <Formula tex={EULER_FORMULA_TEX} label='欧拉公式' className='mx-1 text-muted' />
-            称为欧拉公式；把 θ 取为 π 得到的
-            <Formula tex={EULER_IDENTITY_TEX} label='欧拉恒等式' className='mx-1 text-muted' />
-            称为欧拉恒等式。本页把「乘以 i 等于旋转」当作直观模型，它只对乘以 i 成立。
+        <div className='mx-auto w-full max-w-[1240px] px-4 text-xs leading-relaxed text-faint sm:px-6'>
+          <p className='max-w-[74ch]'>
+            术语说明：一般形式 <Formula tex={EULER_FORMULA_TEX} label='欧拉公式' className='text-muted' />
+            称为欧拉公式；把 θ 取为 π 得到的 <Formula tex={EULER_IDENTITY_TEX} label='欧拉恒等式' className='text-muted' />
+            称为欧拉恒等式。本站把「乘以 i 等于旋转」当作直观模型，它只对乘以 i 成立，不是严格证明。
           </p>
           <p className='mt-3'>
-            本站遵循系统的「减少动态效果」设置；开启后动画会停止在关键结论上，信息完整可读。
+            影片与页面共用同一套图形与时间轴（src/story），因此导出的 MP4 与你在浏览器里看到的完全一致。本站遵循系统的「减少动态效果」设置。
           </p>
           <p className='mt-3'>
-            <a href='#hero' className='transition-colors hover:text-paper'>
-              回到顶部 ↑
+            <a href='#film' className='transition-colors hover:text-paper'>
+              回到影片 ↑
             </a>
           </p>
         </div>

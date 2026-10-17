@@ -9,13 +9,21 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit false --pretty",
-    "test": "vitest run"
+    "test": "vitest run",
+    "film:preview": "remotion studio remotion/index.ts",
+    "film:still": "remotion still remotion/index.ts EulerIdentity out/still.png --frame=1150",
+    "export:mp4": "remotion render remotion/index.ts EulerIdentity out/euler-identity.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --log=info"
   },
   "dependencies": {
+    "@remotion/bundler": "^4.0.536",
+    "@remotion/cli": "^4.0.536",
+    "@remotion/renderer": "^4.0.536",
+    "@remotion/studio": "^4.0.536",
     "katex": "^0.16.11",
     "motion": "^11.15.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.536"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

@@ -3,6 +3,7 @@ import { animate, motion, motionValue } from 'motion/react'
 import { GhostButton, PlaybackBar, PlayButton } from './ui'
 import { DashArc } from './DashPath'
 import { Formula } from './Math'
+import { TEX } from '../lib/tex'
 import { useSequence } from '../hooks/useSequence'
 import { useInView } from '../hooks/useInView'
 import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference'
@@ -116,7 +117,8 @@ export function GrowthScene() {
             stroke='url(#growth-curve)'
             strokeWidth='2.4'
             strokeLinecap='round'
-            initial={reducedMotion ? false : { pathLength: 0, opacity: 0 }}
+            // 减少动态效果时直接给终值：initial={false} 会让 motion 拿到 undefined 的 opacity
+            initial={reducedMotion ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
             animate={{ pathLength: showCurve ? 1 : 0, opacity: showCurve ? 1 : 0 }}
             transition={{ duration: 2, ease: [0.16, 1, 0.3, 1] }}
           />
@@ -137,6 +139,7 @@ export function GrowthScene() {
 
           {/* 光点跑完：圆从终点展开，为下一章的复平面铺路 */}
           <motion.g
+            initial={{ opacity: 0, scale: 0.3 }}
             animate={{ opacity: unfolding ? 1 : 0, scale: unfolding ? 1 : 0.3 }}
             transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
             style={{ transformOrigin: '470px 168px' }}
@@ -163,7 +166,7 @@ export function GrowthScene() {
           <p className='text-xs leading-relaxed text-muted'>
             <span className='text-node'>先记一句：</span>
             增长讲的是「大小」，旋转讲的是「方向」。等我们在单位圆上转动{' '}
-            <Formula tex='e^{i\\theta}' label='e 的 i 次方 θ' className='text-paper' /> 时，它的长度并不会变大。
+            <Formula tex={TEX.eIPowTheta} label='e 的 i 次方 θ' className='text-paper' /> 时，它的长度并不会变大。
           </p>
         </div>
 

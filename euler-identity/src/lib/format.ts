@@ -1,5 +1,15 @@
 import { cleanNumber, formatTrimmed, getSpecial, normalizeAngle } from './math'
 
+/**
+ * 分量读数：最多三位小数，但去掉多余的 0。
+ * 于是理论上为零的地方显示 0，而不是 0.000 或 -0.000。
+ */
+export function formatComponent(value: number, digits = 3): string {
+  const clean = cleanNumber(value)
+  if (clean === 0) return '0'
+  return clean.toFixed(digits).replace(/\.?0+$/, '')
+}
+
 /** 把实部 / 虚部拼成 “0.34 + 0.94i” 这样的复数文本 */
 export function complexTex(real: number, imag: number, digits = 3): string {
   const r = cleanNumber(Number(real.toFixed(digits)))
