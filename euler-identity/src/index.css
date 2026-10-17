@@ -1,0 +1,216 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink-950: #05070f;
+  --color-ink-900: #080d1a;
+  --color-ink-850: #0a1120;
+  --color-ink-800: #0d1526;
+  --color-ink-700: #16203a;
+  --color-paper: #f2efe8;
+  --color-muted: #8ea4bf;
+  --color-faint: #4d5f7a;
+  --color-vector: #4fe3c1;
+  --color-imag: #b9a6ff;
+  --color-node: #f2b134;
+  --color-result: #eafff8;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-display: 'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'Times New Roman', serif;
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Menlo, monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --grid-line: rgba(142, 164, 191, 0.075);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* 章节锚点不被固定导航遮挡 */
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    background-color: var(--color-ink-950);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: rgba(79, 227, 193, 0.28);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-vector);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+@utility text-balance-cn {
+  text-wrap: balance;
+}
+
+@utility glass-panel {
+  background: linear-gradient(180deg, rgba(13, 21, 38, 0.86), rgba(8, 13, 26, 0.72));
+  border: 1px solid rgba(142, 164, 191, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- 背景层：只负责空间感，不参与阅读 ---------- */
+.bg-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 620px at 78% -8%, rgba(79, 227, 193, 0.07), transparent 62%),
+    radial-gradient(760px 560px at 8% 12%, rgba(185, 166, 255, 0.06), transparent 60%),
+    radial-gradient(1100px 800px at 50% 108%, rgba(10, 17, 32, 0.9), transparent 65%);
+}
+
+.bg-grid {
+  position: fixed;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 42%, #000 30%, transparent 78%);
+  mask-image: radial-gradient(ellipse 78% 62% at 50% 42%, #000 30%, transparent 78%);
+}
+
+/* 极缓慢漂移的少量光点 */
+.bg-motes span {
+  position: fixed;
+  z-index: 0;
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(200, 226, 255, 0.5);
+  pointer-events: none;
+  animation: mote-drift 26s ease-in-out infinite;
+}
+
+@keyframes mote-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.16;
+  }
+  50% {
+    transform: translate3d(14px, -22px, 0);
+    opacity: 0.42;
+  }
+}
+
+/* ---------- 数学图形语言 ---------- */
+.glyph-math {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.hairline {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.glow-vector {
+  filter: drop-shadow(0 0 6px rgba(79, 227, 193, 0.45));
+}
+
+.glow-imag {
+  filter: drop-shadow(0 0 6px rgba(185, 166, 255, 0.45));
+}
+
+.glow-node {
+  filter: drop-shadow(0 0 8px rgba(242, 177, 52, 0.5));
+}
+
+/* 公式缓慢呼吸：只用于最终结论等焦点元素 */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.92;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.breathe {
+  animation: breathe 7s ease-in-out infinite;
+}
+
+/* 拖动中的角度滑块 */
+input[type='range'].angle-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 34px;
+  background: transparent;
+  cursor: grab;
+}
+
+input[type='range'].angle-range:active {
+  cursor: grabbing;
+}
+
+input[type='range'].angle-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(79, 227, 193, 0.55), rgba(185, 166, 255, 0.55));
+}
+
+input[type='range'].angle-range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(79, 227, 193, 0.55), rgba(185, 166, 255, 0.55));
+}
+
+input[type='range'].angle-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 3px solid var(--color-vector);
+  box-shadow: 0 0 14px rgba(79, 227, 193, 0.55);
+}
+
+input[type='range'].angle-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 3px solid var(--color-vector);
+  box-shadow: 0 0 14px rgba(79, 227, 193, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .bg-motes span {
+    animation: none;
+  }
+
+  .breathe {
+    animation: none;
+  }
+}
