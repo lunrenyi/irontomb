@@ -39,7 +39,7 @@ export function GrowthScene({ frame }: { frame: number }) {
       { at: 0, camera: growthCamera(plan, framings, 0) },
       { at: growTo + 10, camera: growthCamera(plan, framings, 1) },
       { at: 300, camera: handoff },
-      { at: 330, camera: handoff },
+      { at: 390, camera: handoff },
     ],
     frame,
     easeInOut,
@@ -47,7 +47,7 @@ export function GrowthScene({ frame }: { frame: number }) {
 
   // 收尾时点亮五个方向感最强的梢头，暗示「接下来是五条不同的路」
   const tips = useMemo(() => pickTips(plant.segments, 5), [plant])
-  const glow = range(frame, 258, 292) * (1 - range(frame, 318, 340))
+  const glow = range(frame, 258, 296) * (1 - range(frame, 352, 386))
 
   return (
     <>
@@ -85,14 +85,14 @@ export function GrowthScene({ frame }: { frame: number }) {
       <Caption frame={frame} from={186} to={252} size={40}>
         新的枝条继续生长，长成一张局部的树。
       </Caption>
-      <Caption frame={frame} from={276} to={330} size={42} color={'#ffd479'}>
+      <Caption frame={frame} from={276} to={348} size={42} color={'#ffd479'}>
         但真正的世界，不只有分叉。
       </Caption>
 
       <Title
         frame={frame}
-        from={300}
-        to={330}
+        from={344}
+        to={390}
         title={'从枝条到星海'}
         subtitle={'知识如何从分叉走向连接，最终让我们看见更大的世界。'}
         size={86}

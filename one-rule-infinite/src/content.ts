@@ -22,13 +22,13 @@ export const ACTS = [
   {
     id: 'growth',
     name: '第一幕 · 枝条',
-    share: '约 11%',
+    share: '约 13%',
     note: '一个生长点，如何长出一棵局部的树。',
   },
   {
     id: 'knowledge',
     name: '第二幕 · 知识',
-    share: '约 65%',
+    share: '约 64%',
     note: '积累、依赖、复用与汇合，最后汇聚成一个成果。',
   },
   {
