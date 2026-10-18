@@ -1,0 +1,158 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink-950: #04060d;
+  --color-ink-900: #070c18;
+  --color-ink-850: #0a1222;
+  --color-ink-800: #0e1930;
+  --color-navy: #14244a;
+  --color-paper: #f4f1e8;
+  --color-muted: #8d99b6;
+  --color-faint: #59647f;
+  --color-signal: #6fe3d0;
+  --color-blue: #6aa8ff;
+  --color-violet: #b48cff;
+  --color-amber: #ffc978;
+  --color-bio: #7ef0b0;
+  --color-circuit: #8ad8ff;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-display: 'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'Times New Roman', serif;
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Menlo, monospace;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --grid-line: rgba(141, 153, 182, 0.06);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    background-color: var(--color-ink-950);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: rgba(111, 227, 208, 0.28);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+@utility glass-panel {
+  background: linear-gradient(180deg, rgba(14, 25, 48, 0.86), rgba(7, 12, 24, 0.72));
+  border: 1px solid rgba(141, 153, 182, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- 背景层：只负责空间感 ---------- */
+.bg-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 620px at 74% -8%, rgba(106, 168, 255, 0.1), transparent 62%),
+    radial-gradient(760px 560px at 10% 14%, rgba(111, 227, 208, 0.06), transparent 60%),
+    radial-gradient(1100px 800px at 50% 108%, rgba(4, 6, 13, 0.95), transparent 65%);
+}
+
+.bg-grid {
+  position: fixed;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 80px 80px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 40%, #000 30%, transparent 78%);
+  mask-image: radial-gradient(ellipse 78% 62% at 50% 40%, #000 30%, transparent 78%);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.94;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.breathe {
+  animation: breathe 8s ease-in-out infinite;
+}
+
+/* ---------- 参数滑块 ---------- */
+input[type='range'].lab-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 30px;
+  background: transparent;
+  cursor: grab;
+}
+
+input[type='range'].lab-range:active {
+  cursor: grabbing;
+}
+
+input[type='range'].lab-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(111, 227, 208, 0.55), rgba(106, 168, 255, 0.5));
+}
+
+input[type='range'].lab-range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(111, 227, 208, 0.55), rgba(106, 168, 255, 0.5));
+}
+
+input[type='range'].lab-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 3px solid var(--color-signal);
+  box-shadow: 0 0 14px rgba(111, 227, 208, 0.45);
+}
+
+input[type='range'].lab-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 3px solid var(--color-signal);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .breathe {
+    animation: none;
+  }
+}
