@@ -18,16 +18,16 @@ export interface SceneDef {
 }
 
 export const SCENES: SceneDef[] = [
-  // 第一幕 · 枝条（约 13%）：只做引子，把接力棒交给第二幕。
-  // 收尾那一拍（树居中 + 梢头点亮 + 字幕 + 标题卡）特意留了 3.8 秒，多出来的 2 秒给它。
-  { id: 'growth', title: '枝条', start: 0, duration: 390 },
-  // 第二幕 · 知识（约 64%）：全片的主体与高潮
-  { id: 'domains', title: '五个方向', start: 375, duration: 440 },
-  { id: 'fields', title: '积累', start: 800, duration: 480 },
-  { id: 'network', title: '连接', start: 1265, duration: 430 },
-  { id: 'phone', title: '智能手机', start: 1680, duration: 570 },
+  // 第一幕 · 枝条（约 15%）：只做引子，把接力棒交给第二幕。
+  // 收尾那一拍（树居中 + 梢头点亮 + 字幕 + 标题卡）特意留了 5.8 秒，比原本长 4 秒。
+  { id: 'growth', title: '枝条', start: 0, duration: 450 },
+  // 第二幕 · 知识（约 62%）：全片的主体与高潮
+  { id: 'domains', title: '五个方向', start: 435, duration: 440 },
+  { id: 'fields', title: '积累', start: 860, duration: 480 },
+  { id: 'network', title: '连接', start: 1325, duration: 430 },
+  { id: 'phone', title: '智能手机', start: 1740, duration: 570 },
   // 第三幕 · 星海（约 26%）：把视野拉到宇宙，再回到人
-  { id: 'cosmos', title: '星海', start: 2235, duration: 780 },
+  { id: 'cosmos', title: '星海', start: 2295, duration: 780 },
 ]
 
 export const TOTAL_FRAMES = SCENES[SCENES.length - 1].start + SCENES[SCENES.length - 1].duration
