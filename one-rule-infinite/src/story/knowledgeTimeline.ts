@@ -94,10 +94,13 @@ export function knowledgeFramings(graph: KnowledgeGraph): KnowledgeFramings {
 /**
  * 节点与标签的屏幕尺寸跟着镜头缩放：
  * 拉到全景时保持清爽，推近时自动变大，所以任何取景下都看得清。
+ *
+ * 上限不能太小：一旦截顶，节点的屏幕尺寸就被钉死在 4.6 * 上限 像素，
+ * 再怎么推近也不会变大 —— 第二幕开场那个「孤零零的起点」会小到看不见。
  */
 export function nodeScaleFor(camera: Camera, whole: Camera): number {
   const k = camera.scale / Math.max(0.02, whole.scale)
-  return Math.min(2.8, Math.max(0.85, k))
+  return Math.min(6, Math.max(0.85, k))
 }
 
 /** 把若干关键帧包装成一段显式的镜头运动（起止点与缓动都写死，不追踪任何逐帧变化） */

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { CosmosFigure } from '../viz/cosmosfigure'
 import { cameraTransform, fitBounds } from '../viz/camera'
 import { buildCosmosWeb, cosmosStats } from '../lib/cosmos'
@@ -15,7 +15,7 @@ const VIEWPORT = { width: 980, height: 620 }
  * 画面上一直挂着「程序生成的示意结构」，并且写清楚真实的形成机制是引力与物质演化。
  * 换一片宇宙只是换一个随机种子，形状完全不同，但成因不会因此改变。
  */
-export function CosmosView() {
+export function CosmosView({ footer }: { footer?: ReactNode }) {
   const reducedMotion = useReducedMotionPreference()
   const [seed, setSeed] = useState(881204)
   const [knots, setKnots] = useState(16)
@@ -50,7 +50,7 @@ export function CosmosView() {
   const respawn = useCallback(() => setSeed((s) => s + 5077), [])
 
   return (
-    <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-10'>
+    <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center lg:gap-12'>
       <div>
         <div className='relative mx-auto w-full max-w-[min(94vw,640px)]' style={{ aspectRatio: '49 / 31' }}>
           <svg viewBox={'0 0 ' + VIEWPORT.width + ' ' + VIEWPORT.height} className='h-full w-full' role='img' aria-label='程序生成的宇宙网示意：发光的团块、连接它们的丝状结构，以及大片留空的区域'>
@@ -67,8 +67,12 @@ export function CosmosView() {
           <Ghost onClick={respawn}>换一片宇宙</Ghost>
           <Ghost onClick={() => setTick((t) => t + 1)}>重播</Ghost>
         </div>
-        <div className='mt-4 max-w-[420px]'>
-          <Slider id='cosmos-knots' label='聚集区数量' value={knots} min={8} max={28} step={1} suffix=' 个' onChange={setKnots} />
+        <div className='mt-4 flex flex-wrap items-end gap-x-8 gap-y-3'>
+          <div className='w-full max-w-[420px]'>
+            <Slider id='cosmos-knots' label='聚集区数量' value={knots} min={8} max={28} step={1} suffix=' 个' onChange={setKnots} />
+          </div>
+          <span className='flex-1' />
+          {footer}
         </div>
       </div>
 
@@ -91,7 +95,7 @@ export function CosmosView() {
         </div>
 
         <p className='text-[12px] leading-relaxed text-faint'>
-          这一页的宇宙网是<b className='text-muted'>受真实宇宙网启发的程序化可视化</b>，不是真实观测数据。
+          受真实宇宙网启发的<b className='text-muted'>程序化可视化</b>，非真实观测数据。
         </p>
       </aside>
     </div>

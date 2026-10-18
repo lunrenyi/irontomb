@@ -68,7 +68,7 @@ export function FieldsScene({ frame }: { frame: number }) {
         <br />
         每一条都在自己的方向上积累了很多年。
       </Caption>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 906, textAlign: 'center', opacity: range(frame, 120, 170) * 0.5, fontSize: 22, color: '#5c7168' }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 800, textAlign: 'center', opacity: range(frame, 414, 442) * (1 - range(frame, 462, 478)), fontSize: 24, color: '#5c7168' }}>
         （这是一张简化的概念模型，用来讲清依赖关系，不是技术史谱系）
       </div>
     </>

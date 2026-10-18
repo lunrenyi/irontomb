@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { KnowledgeFigure } from '../viz/knowledgefigure'
 import { PhoneGlyph, PHONE_GLYPH_SCALE } from '../viz/phone'
 import { cameraTransform, fitBounds } from '../viz/camera'
@@ -8,7 +8,7 @@ import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference'
 import { Chip, Ghost, PlayButton } from './ui'
 
 const VIEWPORT = { width: 900, height: 720 }
-const REVEAL_MS = 9000
+const REVEAL_MS = 6200
 
 type ViewMode = 'all' | 'upstream' | 'downstream'
 
@@ -22,7 +22,7 @@ type ViewMode = 'all' | 'upstream' | 'downstream'
  *
  * 点任意节点会高亮它与相关节点之间的连线，并把无关的部分压暗。
  */
-export function KnowledgeNet() {
+export function KnowledgeNet({ footer }: { footer?: ReactNode }) {
   const reducedMotion = useReducedMotionPreference()
   const graph = useMemo(() => buildKnowledgeGraph(), [])
   const camera = useMemo(() => fitBounds(graph.bounds, VIEWPORT, { padding: 1.12, maxScale: 1.3 }), [graph])
@@ -100,7 +100,7 @@ export function KnowledgeNet() {
   }, [])
 
   return (
-    <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10'>
+    <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-center lg:gap-12'>
       <div>
         <div className='relative mx-auto w-full max-w-[min(94vw,860px)]' style={{ aspectRatio: '5 / 4' }}>
           <svg viewBox={'0 0 ' + VIEWPORT.width + ' ' + VIEWPORT.height} className='h-full w-full touch-manipulation' role='img' aria-label='知识依赖网络示意：节点之间既有分支，也有跨方向的连接'>
@@ -135,6 +135,8 @@ export function KnowledgeNet() {
           <Ghost onClick={() => { setSelected(null); setMode('all') }} disabled={selected === null}>
             恢复整张网络
           </Ghost>
+          <span className='flex-1' />
+          {footer}
         </div>
         <p className='mt-3 text-[12px] leading-relaxed text-faint'>
           点任意一个节点：它需要什么、又能撑起什么都会亮起来。
