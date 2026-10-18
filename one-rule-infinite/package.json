@@ -1,0 +1,37 @@
+{
+  "name": "one-rule-infinite",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "一条规则，长出无限 —— 递归、分形与自然分支结构的互动科普",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run",
+    "film:preview": "remotion studio remotion/index.ts",
+    "film:still": "remotion still remotion/index.ts Growth out/still.png --frame=600",
+    "export:mp4": "remotion render remotion/index.ts Growth out/one-rule-infinite.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --log=info"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.536",
+    "@remotion/studio": "^4.0.536",
+    "katex": "^0.16.11",
+    "motion": "^11.15.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.536"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/katex": "^0.16.7",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  }
+}

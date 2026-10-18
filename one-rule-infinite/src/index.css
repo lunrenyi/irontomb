@@ -1,0 +1,156 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-ink-950: #060f0c;
+  --color-ink-900: #08150f;
+  --color-ink-850: #0b1b14;
+  --color-ink-800: #0f2419;
+  --color-moss: #2f5a48;
+  --color-paper: #f3efe4;
+  --color-muted: #8fa79c;
+  --color-faint: #5c7168;
+  --color-leaf: #63b06b;
+  --color-shoot: #7df0c0;
+  --color-bud: #ffd479;
+  --color-water: #7fc4d8;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-display: 'Songti SC', 'Source Han Serif SC', 'Noto Serif CJK SC', 'Times New Roman', serif;
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Menlo, monospace;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --grid-line: rgba(143, 167, 156, 0.07);
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    background-color: var(--color-ink-950);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: rgba(125, 240, 192, 0.28);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-shoot);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+@utility glass-panel {
+  background: linear-gradient(180deg, rgba(15, 36, 25, 0.86), rgba(8, 21, 15, 0.72));
+  border: 1px solid rgba(143, 167, 156, 0.16);
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- 背景层：只负责空间感 ---------- */
+.bg-field {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 620px at 74% -8%, rgba(99, 176, 107, 0.09), transparent 62%),
+    radial-gradient(760px 560px at 10% 14%, rgba(125, 240, 192, 0.05), transparent 60%),
+    radial-gradient(1100px 800px at 50% 108%, rgba(11, 27, 20, 0.95), transparent 65%);
+}
+
+.bg-grid {
+  position: fixed;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 72px 72px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 40%, #000 30%, transparent 78%);
+  mask-image: radial-gradient(ellipse 78% 62% at 50% 40%, #000 30%, transparent 78%);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.94;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.breathe {
+  animation: breathe 8s ease-in-out infinite;
+}
+
+/* ---------- 参数滑块 ---------- */
+input[type='range'].growth-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 30px;
+  background: transparent;
+  cursor: grab;
+}
+
+input[type='range'].growth-range:active {
+  cursor: grabbing;
+}
+
+input[type='range'].growth-range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(99, 176, 107, 0.55), rgba(125, 240, 192, 0.5));
+}
+
+input[type='range'].growth-range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(99, 176, 107, 0.55), rgba(125, 240, 192, 0.5));
+}
+
+input[type='range'].growth-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 3px solid var(--color-leaf);
+  box-shadow: 0 0 14px rgba(125, 240, 192, 0.5);
+}
+
+input[type='range'].growth-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--color-paper);
+  border: 3px solid var(--color-leaf);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .breathe {
+    animation: none;
+  }
+}
