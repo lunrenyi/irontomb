@@ -26,8 +26,8 @@ export function NetworkScene({ frame }: { frame: number }) {
     [
       { at: 0, camera: framings.fields },
       { at: 40, camera: framings.fields },
-      { at: 300, camera: framings.network },
-      { at: 480, camera: framings.network },
+      { at: 286, camera: framings.network },
+      { at: 420, camera: framings.network },
     ],
     frame,
   )
@@ -36,7 +36,7 @@ export function NetworkScene({ frame }: { frame: number }) {
   const links = CROSS_EDGES.map(([to, from]) => to + '>' + from)
   const focusIndex = Math.min(links.length - 1, Math.floor(range(frame, 170, 350) * links.length))
   const focused = links[focusIndex]
-  const focusWindow = range(frame, 170, 200) * (1 - range(frame, 350, 380))
+  const focusWindow = range(frame, 165, 195) * (1 - range(frame, 296, 328))
   const [focusTo, focusFrom] = focused.split('>') as [string, string]
   const focusNodes = [focusTo, focusFrom]
 
@@ -62,16 +62,16 @@ export function NetworkScene({ frame }: { frame: number }) {
         </div>
       ) : null}
 
-      <Statement frame={frame} from={40} to={120} y={806} size={50}>
+      <Statement frame={frame} from={40} to={112} y={806} size={50}>
         然后，事情开始变化。
       </Statement>
-      <Statement frame={frame} from={186} to={276} y={806} size={54} color={K_MERGE}>
+      <Statement frame={frame} from={172} to={256} y={806} size={54} color={K_MERGE}>
         不同的分支，开始互相连接。
       </Statement>
-      <Statement frame={frame} from={356} to={452} y={806} size={56} color={'#7df0c0'}>
+      <Statement frame={frame} from={296} to={392} y={806} size={56} color={'#7df0c0'}>
         知识的增长，不只是分叉，更是连接。
       </Statement>
-      <Caption frame={frame} from={366} to={460} size={34}>
+      <Caption frame={frame} from={306} to={404} size={34}>
         一个成果可以建立在多个前置之上；一项基础技术也会被反复复用。
         <br />
         从这里开始，这张图已经不能叫「树」了。

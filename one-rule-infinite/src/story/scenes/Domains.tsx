@@ -24,15 +24,15 @@ export function DomainsScene({ frame }: { frame: number }) {
     [
       { at: 0, camera: { x: 0, y: -60, scale: 1.45 } },
       { at: 70, camera: framings.root },
-      { at: 260, camera: framings.domains },
-      { at: 450, camera: framings.domains },
+      { at: 250, camera: framings.domains },
+      { at: 435, camera: framings.domains },
     ],
     frame,
   )
 
   // 五个方向依次亮起，配合屏幕下方的读数
-  const active = Math.min(DOMAINS.length - 1, Math.floor(range(frame, 250, 400) * DOMAINS.length))
-  const highlight = frame > 250 && frame < 400 ? ['root', DOMAINS[active].length ? graph.layers[1][active].id : 'root'] : []
+  const active = Math.min(DOMAINS.length - 1, Math.floor(range(frame, 250, 390) * DOMAINS.length))
+  const highlight = frame > 250 && frame < 392 ? ['root', DOMAINS[active].length ? graph.layers[1][active].id : 'root'] : []
 
   return (
     <>
@@ -45,23 +45,23 @@ export function DomainsScene({ frame }: { frame: number }) {
       <div
         style={{
           position: 'absolute', left: 0, right: 0, top: 672, textAlign: 'center',
-          opacity: range(frame, 250, 280) * (1 - range(frame, 392, 420)),
+          opacity: range(frame, 250, 278) * (1 - range(frame, 386, 414)),
           fontSize: 38, color: SHOOT, letterSpacing: '0.1em',
         }}
       >
         {'方向 ' + (active + 1) + ' / ' + DOMAINS.length + '：' + DOMAINS[active]}
       </div>
 
-      <Statement frame={frame} from={40} to={118} y={806} size={50}>
+      <Statement frame={frame} from={40} to={112} y={806} size={50}>
         从同一个起点，长出不同的探索方向。
       </Statement>
-      <Statement frame={frame} from={246} to={330} y={806} size={50}>
+      <Statement frame={frame} from={238} to={318} y={806} size={50}>
         每一个方向，都会继续分出更多方向。
       </Statement>
-      <Statement frame={frame} from={366} to={440} y={806} size={48} color={MUTED}>
+      <Statement frame={frame} from={352} to={432} y={806} size={48} color={MUTED}>
         但到这一步为止，它还只是一棵树。
       </Statement>
-      <Caption frame={frame} from={40} to={140} size={34}>
+      <Caption frame={frame} from={40} to={134} size={34}>
         树的语言只有一句话：一个父亲生出若干孩子。
       </Caption>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 900, textAlign: 'center', opacity: range(frame, 380, 420) * 0.55, fontSize: 22, color: '#5c7168' }}>

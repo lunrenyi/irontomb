@@ -129,7 +129,7 @@ export function KnowledgeFigure({
             <circle r={r * (focused ? 3.6 : 2.2)} fill={color} opacity={(focused ? 0.28 : 0.12) * (dim ? 0.12 : 1)} />
             <circle r={r} fill={color} opacity={(dim ? 0.18 : 1) * (focused ? 1 : 0.92)} />
             {multi && !isHub ? <circle r={r * 1.8} fill='none' stroke={K_MERGE} strokeWidth={1 * u} strokeOpacity={dim ? 0.08 : 0.45} /> : null}
-            {onSelect ? <circle r={Math.max(15 * u, r * 3)} fill='transparent' /> : null}
+            {onSelect ? <circle r={Math.max(70 * u, r * 3)} fill='transparent' /> : null}
             {labels && labelOpacity > 0.01 && !dim ? (
               <text
                 x={textX}

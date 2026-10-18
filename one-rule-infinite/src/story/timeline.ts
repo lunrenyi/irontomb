@@ -17,18 +17,16 @@ export interface SceneDef {
   duration: number
 }
 
-const seconds = (s: number) => Math.round(s * FPS)
-
 export const SCENES: SceneDef[] = [
-  // 第一幕 · 生长（约 10%）：只做引子，把接力棒交给第二幕
-  { id: 'growth', title: '枝条', start: 0, duration: seconds(11) },
-  // 第二幕 · 知识（约 63%）：全片的主体与高潮
-  { id: 'domains', title: '五个方向', start: seconds(10.5), duration: seconds(16) },
-  { id: 'fields', title: '积累', start: seconds(25.5), duration: seconds(19) },
-  { id: 'network', title: '连接', start: seconds(43.5), duration: seconds(17) },
-  { id: 'phone', title: '智能手机', start: seconds(59.5), duration: seconds(23) },
-  // 第三幕 · 群星（约 27%）：把视野拉到宇宙，再回到人
-  { id: 'cosmos', title: '星海', start: seconds(81.5), duration: seconds(31) },
+  // 第一幕 · 枝条（约 11%）：只做引子，把接力棒交给第二幕
+  { id: 'growth', title: '枝条', start: 0, duration: 330 },
+  // 第二幕 · 知识（约 65%）：全片的主体与高潮
+  { id: 'domains', title: '五个方向', start: 315, duration: 440 },
+  { id: 'fields', title: '积累', start: 740, duration: 480 },
+  { id: 'network', title: '连接', start: 1205, duration: 430 },
+  { id: 'phone', title: '智能手机', start: 1620, duration: 570 },
+  // 第三幕 · 星海（约 26%）：把视野拉到宇宙，再回到人
+  { id: 'cosmos', title: '星海', start: 2175, duration: 780 },
 ]
 
 export const TOTAL_FRAMES = SCENES[SCENES.length - 1].start + SCENES[SCENES.length - 1].duration

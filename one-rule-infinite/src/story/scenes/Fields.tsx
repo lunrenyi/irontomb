@@ -18,20 +18,20 @@ export function FieldsScene({ frame }: { frame: number }) {
   const framings = useMemo(() => knowledgeFramings(graph), [graph])
 
   const [p0, p1] = STAGE_PROGRESS.fields
-  const progress = p0 + (p1 - p0) * easeInOut(range(frame, 26, 480))
+  const progress = p0 + (p1 - p0) * easeInOut(range(frame, 26, 428))
 
   const camera = segmentCamera(
     [
       { at: 0, camera: framings.domains },
       { at: 40, camera: framings.domains },
-      { at: 520, camera: framings.fields },
-      { at: 540, camera: framings.fields },
+      { at: 428, camera: framings.fields },
+      { at: 470, camera: framings.fields },
     ],
     frame,
   )
 
   // 走到第三个技术模块时，把它的四个前置一起点亮：这是「多前置」的第一个提示
-  const chipDemo = range(frame, 380, 410) * (1 - range(frame, 500, 528))
+  const chipDemo = range(frame, 342, 372) * (1 - range(frame, 428, 464))
   const chip = graph.byId.chip
 
   return (
@@ -57,13 +57,13 @@ export function FieldsScene({ frame }: { frame: number }) {
       <Statement frame={frame} from={40} to={122} y={806} size={50}>
         每条方向上，都积累了具体的技术。
       </Statement>
-      <Statement frame={frame} from={196} to={286} y={806} size={50}>
+      <Statement frame={frame} from={190} to={274} y={806} size={50}>
         越往上，一个成果需要的前置就越多。
       </Statement>
-      <Statement frame={frame} from={340} to={420} y={806} size={48} color={MUTED}>
+      <Statement frame={frame} from={322} to={406} y={806} size={48} color={MUTED}>
         于是，图开始变得拥挤。
       </Statement>
-      <Caption frame={frame} from={60} to={200} size={34}>
+      <Caption frame={frame} from={58} to={188} size={34}>
         材料、化学、电磁、算法、工艺……
         <br />
         每一条都在自己的方向上积累了很多年。

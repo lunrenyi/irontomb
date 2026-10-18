@@ -84,15 +84,14 @@ export function CosmosView() {
             真实宇宙里，星系就是这样分布的：物质先塌缩成团，团与团之间沿捷径连成丝，
             丝与丝之间留下巨大的空洞。
           </p>
-            <p className='mt-3 text-[13px] leading-relaxed text-paper/80'>
+          <p className='mt-3 text-[13px] leading-relaxed text-paper/80'>
             它和树枝、知识网络看起来有几分相似，
             <span className='text-bud'>但成因完全不同 —— 一个靠分叉规则，一个靠连接与积累，一个靠引力下的物质演化。</span>
           </p>
         </div>
 
         <p className='text-[12px] leading-relaxed text-faint'>
-          说明：这一页的宇宙网是受真实宇宙网启发的<b className='text-muted'>程序化可视化</b>，
-          由固定种子生成、每次渲染一致，并没有使用任何真实的观测数据。
+          这一页的宇宙网是<b className='text-muted'>受真实宇宙网启发的程序化可视化</b>，不是真实观测数据。
         </p>
       </aside>
     </div>

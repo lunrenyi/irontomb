@@ -4,7 +4,7 @@ import { PhoneGlyph, PHONE_GLYPH_SCALE } from '../../viz/phone'
 import { buildKnowledgeGraph, PHONE_PARTS } from '../../lib/knowledge'
 import { clamp01, easeInOut, range } from '../../lib/easing'
 import { knowledgeFramings, segmentCamera, cameraTransform, lerpCamera, VIEWPORT, STAGE_PROGRESS, nodeScaleFor } from '../knowledgeTimeline'
-import { Caption, INK, MUTED, SHOOT, Statement } from '../FilmChrome'
+import { Caption, MUTED, SHOOT, Statement } from '../FilmChrome'
 import { STAGE_H, STAGE_W } from '../timeline'
 
 /**
@@ -21,17 +21,17 @@ export function PhoneScene({ frame }: { frame: number }) {
   const phone = graph.byId.phone
 
   const [p0, p1] = STAGE_PROGRESS.phone
-  const progress = p0 + (p1 - p0) * easeInOut(range(frame, 10, 620))
+  const progress = p0 + (p1 - p0) * easeInOut(range(frame, 10, 540))
 
   // 第一拍：从全景收拢到手机
   const converge = segmentCamera(
     [
       { at: 0, camera: framings.network },
-      { at: 60, camera: framings.network },
-      { at: 210, camera: framings.focus },
-      { at: 430, camera: framings.focus },
-      { at: 600, camera: framings.whole },
-      { at: 660, camera: framings.whole },
+      { at: 48, camera: framings.network },
+      { at: 168, camera: framings.focus },
+      { at: 352, camera: framings.focus },
+      { at: 528, camera: framings.whole },
+      { at: 570, camera: framings.whole },
     ],
     frame,
   )
@@ -39,24 +39,24 @@ export function PhoneScene({ frame }: { frame: number }) {
   const opening = segmentCamera(
     [
       { at: 0, camera: framings.focus },
-      { at: 130, camera: lerpCamera(framings.focus, framings.whole, 0.45) },
-      { at: 320, camera: framings.whole },
-      { at: 660, camera: framings.whole },
+      { at: 104, camera: lerpCamera(framings.focus, framings.whole, 0.45) },
+      { at: 262, camera: framings.whole },
+      { at: 570, camera: framings.whole },
     ],
     frame,
   )
-  const openingPhase = 1 - clamp01(range(frame, 430, 470))
+  const openingPhase = 1 - clamp01(range(frame, 358, 398))
   const camera = lerpCamera(opening, converge, openingPhase)
 
   // 五个模块依次点亮 —— 每一个都对应网络里真实的一个节点
   const parts: Record<string, number> = {}
   PHONE_PARTS.forEach((id, i) => {
-    parts[id] = clamp01(range(frame, 150 + i * 52, 212 + i * 52))
+    parts[id] = clamp01(range(frame, 118 + i * 42, 174 + i * 42))
   })
-  const assemble = clamp01(range(frame, 96, 430))
+  const assemble = clamp01(range(frame, 82, 352))
 
   // 第二拍：五个应用从手机上方向外长出来
-  const appsIn = range(frame, 470, 560)
+  const appsIn = range(frame, 402, 478)
 
   return (
     <>
@@ -66,9 +66,9 @@ export function PhoneScene({ frame }: { frame: number }) {
             graph={graph}
             progress={progress}
             cameraScale={camera.scale} nodeScale={nodeScaleFor(camera, framings.whole)}
-            labelOpacity={range(frame, 30, 80)}
-            fadeUnfocused={range(frame, 470, 524)}
-            highlight={frame > 470 ? graph.apps : []}
+            labelOpacity={range(frame, 30, 74)}
+            fadeUnfocused={range(frame, 402, 452)}
+            highlight={frame > 402 ? graph.apps : []}
           />
           <g transform={'translate(' + phone.x + ' ' + phone.y + ') scale(' + PHONE_GLYPH_SCALE + ')'}>
             <PhoneGlyph assemble={assemble} parts={parts} cameraScale={camera.scale} />
@@ -76,30 +76,22 @@ export function PhoneScene({ frame }: { frame: number }) {
         </g>
       </svg>
 
-      {/* 组装到最后一刻，手机上方浮出这一行 */}
-      <div
-        style={{
-          position: 'absolute', left: 0, right: 0, top: 176, textAlign: 'center',
-          opacity: range(frame, 396, 436) * (1 - range(frame, 470, 512)),
-          fontSize: 40, color: INK, letterSpacing: '0.06em',
-        }}
-      >
-        一个成果，可以凝聚多个领域的积累。
-      </div>
-
-      <Statement frame={frame} from={30} to={104} y={806} size={50}>
+      <Statement frame={frame} from={30} to={92} y={806} size={50}>
         所有连线，一起汇聚。
       </Statement>
-      <Statement frame={frame} from={132} to={228} y={806} size={48}>
+      <Statement frame={frame} from={112} to={196} y={806} size={48}>
         五个方向，十几年的积累，在一个小盒子里汇合。
       </Statement>
-      <Statement frame={frame} from={466} to={540} y={806} size={50}>
+      <Statement frame={frame} from={248} to={340} y={806} size={46}>
+        一个成果，可以凝聚多个领域的积累。
+      </Statement>
+      <Statement frame={frame} from={400} to={462} y={806} size={50}>
         而它并不是终点。
       </Statement>
-      <Statement frame={frame} from={556} to={650} y={806} size={50} color={SHOOT}>
+      <Statement frame={frame} from={482} to={558} y={806} size={50} color={SHOOT}>
         每一个新成果，都可能成为下一次探索的起点。
       </Statement>
-      <Caption frame={frame} from={576} to={654} size={34}>
+      <Caption frame={frame} from={498} to={566} size={34}>
         摄影、地图、支付、远程协作 ——
         <br />
         没有哪一项是手机单独创造的，它们是多项技术共同成熟之后才出现的可能。

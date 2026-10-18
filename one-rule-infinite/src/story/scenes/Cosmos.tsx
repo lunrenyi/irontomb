@@ -37,21 +37,21 @@ export function CosmosScene({ frame }: { frame: number }) {
   const camera = cameraAt(
     [
       { at: 0, camera: whole },
-      { at: 230, camera: lerpCamera(whole, deep, 0.5) },
-      { at: 420, camera: deep },
-      { at: 900, camera: deep },
+      { at: 206, camera: lerpCamera(whole, deep, 0.5) },
+      { at: 392, camera: deep },
+      { at: 780, camera: deep },
     ],
     frame,
     easeInOut,
   )
 
   // 知识网络淡出：节点缩成远处的光点，线先散
-  const netFade = 1 - easeIn(range(frame, 20, 190))
+  const netFade = 1 - easeIn(range(frame, 20, 172))
   // 宇宙网入场：星场 -> 丝线 -> 团块，跟镜头后退的方向一致
-  const cosmosIn = easeOut(range(frame, 150, 520))
+  const cosmosIn = easeOut(range(frame, 132, 408))
 
   // 第三步：三个知识节点重新亮起，并用一条虚线指向宇宙网
-  const recallIn = range(frame, 560, 640) * (1 - range(frame, 672, 742))
+  const recallIn = range(frame, 452, 522) * (1 - range(frame, 556, 622))
   return (
     <>
       <svg width={STAGE_W} height={STAGE_H} viewBox={'0 0 ' + STAGE_W + ' ' + STAGE_H} style={{ position: 'absolute', inset: 0 }}>
@@ -68,7 +68,7 @@ export function CosmosScene({ frame }: { frame: number }) {
             <g opacity={recallIn}>
               {RECALL.map((id, i) => {
                 const node = graph.byId[id]
-                const t = clamp01(range(frame, 570 + i * 40, 630 + i * 40))
+                const t = clamp01(range(frame, 462 + i * 34, 516 + i * 34))
                 if (t <= 0) return null
                 const toX = node.x * 0.35
                 const toY = (node.y + 260) * 0.35 - 120
@@ -97,45 +97,45 @@ export function CosmosScene({ frame }: { frame: number }) {
         </g>
       </svg>
 
-      <div style={{ position: 'absolute', right: 96, top: 60, opacity: range(frame, 200, 250) * (1 - range(frame, 560, 620)), fontSize: 22, color: '#7f93a8', letterSpacing: '0.14em' }}>
+      <div style={{ position: 'absolute', right: 96, top: 60, opacity: range(frame, 182, 232) * (1 - range(frame, 452, 508)), fontSize: 22, color: '#7f93a8', letterSpacing: '0.14em' }}>
         宇宙网结构示意 · 受宇宙网启发的程序化可视化
       </div>
-      <div style={{ position: 'absolute', right: 96, top: 108, opacity: range(frame, 300, 360) * (1 - range(frame, 520, 570)), fontSize: 24, color: MUTED, textAlign: 'right', lineHeight: 1.7, letterSpacing: '0.06em' }}>
+      <div style={{ position: 'absolute', right: 96, top: 108, opacity: range(frame, 282, 338) * (1 - range(frame, 424, 472)), fontSize: 24, color: MUTED, textAlign: 'right', lineHeight: 1.7, letterSpacing: '0.06em' }}>
         <div>{stats.knots} 个聚集区 · {stats.filaments} 条丝线</div>
         <div>{Math.round(stats.voidShare * 100)}% 的画面是空的</div>
       </div>
 
-      <Statement frame={frame} from={30} to={110} y={806} size={50}>
+      <Statement frame={frame} from={30} to={98} y={806} size={50}>
         把镜头继续往外拉。
       </Statement>
-      <Statement frame={frame} from={140} to={220} y={806} size={50}>
+      <Statement frame={frame} from={126} to={196} y={806} size={50}>
         节点变成远处的光点，连接线渐渐淡去。
       </Statement>
-      <Statement frame={frame} from={268} to={344} y={806} size={52}>
+      <Statement frame={frame} from={238} to={308} y={806} size={52}>
         在更大的尺度上，宇宙也有自己的网络。
       </Statement>
-      <Statement frame={frame} from={380} to={464} y={806} size={48}>
+      <Statement frame={frame} from={340} to={416} y={806} size={48}>
         星系结成团块，团块连成丝，中间留下巨大的空洞。
       </Statement>
-      <Statement frame={frame} from={478} to={556} y={806} size={46} color={'#8fa4d8'}>
+      <Statement frame={frame} from={432} to={506} y={806} size={46} color={'#8fa4d8'}>
         它的成因不是分叉规则，而是引力下的物质演化。
       </Statement>
-      <Statement frame={frame} from={600} to={684} y={806} size={48} color={SHOOT}>
+      <Statement frame={frame} from={514} to={586} y={806} size={48} color={SHOOT}>
         而认识它，靠的正是我们积累起来的知识与工具。
       </Statement>
 
-      <Caption frame={frame} from={478} to={570} size={34}>
+      <Caption frame={frame} from={432} to={520} size={34}>
         知识网络与宇宙网并不是同一种东西：
         <br />
         前者由人类的探索与积累连成，后者由引力塑造。
       </Caption>
 
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 360, textAlign: 'center', opacity: range(frame, 716, 776), fontSize: 54, color: INK, letterSpacing: '0.1em', lineHeight: 1.4 }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 360, textAlign: 'center', opacity: range(frame, 572, 632), fontSize: 54, color: INK, letterSpacing: '0.1em', lineHeight: 1.4 }}>
         我们用知识连接已知，
         <br />
         再用已知探索未知。
       </div>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 560, textAlign: 'center', opacity: range(frame, 812, 872), fontSize: 40, color: SHOOT, letterSpacing: '0.1em' }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 560, textAlign: 'center', opacity: range(frame, 652, 712), fontSize: 40, color: SHOOT, letterSpacing: '0.1em' }}>
         下一条连接，会带我们发现什么？
       </div>
     </>

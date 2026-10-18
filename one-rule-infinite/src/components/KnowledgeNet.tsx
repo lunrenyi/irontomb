@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { KnowledgeFigure } from '../viz/knowledgefigure'
-import { PhoneGlyph } from '../viz/phone'
+import { PhoneGlyph, PHONE_GLYPH_SCALE } from '../viz/phone'
 import { cameraTransform, fitBounds } from '../viz/camera'
 import { buildKnowledgeGraph, PHONE_PARTS } from '../lib/knowledge'
 import { clamp01 } from '../lib/easing'
@@ -25,7 +25,7 @@ type ViewMode = 'all' | 'upstream' | 'downstream'
 export function KnowledgeNet() {
   const reducedMotion = useReducedMotionPreference()
   const graph = useMemo(() => buildKnowledgeGraph(), [])
-  const camera = useMemo(() => fitBounds(graph.bounds, VIEWPORT, { padding: 1.04, maxScale: 1.3 }), [graph])
+  const camera = useMemo(() => fitBounds(graph.bounds, VIEWPORT, { padding: 1.12, maxScale: 1.3 }), [graph])
 
   const [selected, setSelected] = useState<string | null>(null)
   const [mode, setMode] = useState<ViewMode>('all')
@@ -64,15 +64,15 @@ export function KnowledgeNet() {
   const node = selected ? graph.byId[selected] : null
 
   // 三种看法对应的「该点亮谁」
-  const { highlight, label } = useMemo(() => {
-    if (!node) return { highlight: [] as string[], label: null as string | null }
+  const { highlight } = useMemo(() => {
+    if (!node) return { highlight: [] as string[] }
     if (mode === 'upstream') {
       const set = new Set<string>([node.id])
       node.prereqs.forEach((p) => {
         set.add(p)
         graph.byId[p].prereqs.forEach((q) => set.add(q))
       })
-      return { highlight: [...set], label: '前置基础' }
+      return { highlight: [...set] }
     }
     if (mode === 'downstream') {
       const set = new Set<string>([node.id])
@@ -80,10 +80,10 @@ export function KnowledgeNet() {
         set.add(c)
         graph.byId[c].unlocks.forEach((g) => set.add(g))
       })
-      return { highlight: [...set], label: '下游应用' }
+      return { highlight: [...set] }
     }
     const set = new Set<string>([node.id, ...node.prereqs, ...node.unlocks])
-    return { highlight: [...set], label: '与它直接相关的' }
+    return { highlight: [...set] }
   }, [node, mode, graph])
 
   const phone = graph.byId.phone
@@ -102,7 +102,7 @@ export function KnowledgeNet() {
   return (
     <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-10'>
       <div>
-        <div className='relative mx-auto w-full max-w-[min(94vw,620px)]' style={{ aspectRatio: '5 / 4' }}>
+        <div className='relative mx-auto w-full max-w-[min(94vw,860px)]' style={{ aspectRatio: '5 / 4' }}>
           <svg viewBox={'0 0 ' + VIEWPORT.width + ' ' + VIEWPORT.height} className='h-full w-full touch-manipulation' role='img' aria-label='知识依赖网络示意：节点之间既有分支，也有跨方向的连接'>
             <g transform={cameraTransform(camera, VIEWPORT)}>
               <KnowledgeFigure
@@ -121,7 +121,7 @@ export function KnowledgeNet() {
                 onSelect={pick}
               />
               {assemble > 0.01 ? (
-                <g transform={'translate(' + phone.x + ' ' + (phone.y - 150) + ')'}>
+                <g transform={'translate(' + phone.x + ' ' + phone.y + ') scale(' + PHONE_GLYPH_SCALE + ')'}>
                   <PhoneGlyph assemble={assemble} parts={parts} cameraScale={camera.scale} />
                 </g>
               ) : null}
@@ -201,23 +201,17 @@ export function KnowledgeNet() {
                   </li>
                 ))}
               </ul>
-              <p className='mt-4 text-[12px] text-faint'>当前高亮：{label}</p>
             </div>
           ) : (
             <div className='mt-3 text-[13px] leading-relaxed text-muted'>
-              一开始它像一棵树：一个起点，向外分出五个方向。
-              <span className='mt-2 block text-bud'>接着，跨方向的连线开始出现 —— 一个成果需要好几个前置，基础技术也会被反复复用。</span>
-              <span className='mt-2 block'>从那以后，它就不再是树了，而是一张有向无环图。</span>
+              点上面任意一个节点，看看它站在什么之上、又能撑起什么。
+              <span className='mt-2 block text-bud'>带琥珀色环的节点有多个前置 —— 它们往往来自不同的方向。</span>
             </div>
           )}
         </div>
 
-        <p className='text-[13px] leading-relaxed text-muted'>
-          真实的知识依赖关系本来就更适合用有向无环图来画，而不是树。
-          <span className='mt-1 block text-faint'>
-            本页的名称是为了讲清依赖关系而虚构的示意例子，不代表真实技术史或因果顺序；
-            影片与页面都以此为准，不把它当作精确的先后谱系。
-          </span>
+        <p className='text-[12px] leading-relaxed text-faint'>
+          示意模型：名称为讲清依赖关系而设，不代表真实技术史或因果顺序。
         </p>
       </aside>
     </div>

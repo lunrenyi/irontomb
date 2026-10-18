@@ -7,7 +7,7 @@ import { CosmosView } from './components/CosmosView'
 import { Section } from './components/ui'
 import { ACTS, CLOSING, HERO_QUESTION, SITE_SUBTITLE, SITE_TITLE } from './content'
 import { seekFilm } from './story/playerBus'
-import { SCENES } from './story/timeline'
+import { SCENES, TOTAL_SECONDS } from './story/timeline'
 
 const GROWTH = SCENES.find((scene) => scene.id === 'growth')
 const NETWORK_TURN = SCENES.find((scene) => scene.id === 'network')
@@ -75,7 +75,7 @@ export default function App() {
               跳过引子，直接看知识网络 ↓
             </a>
             <span className='text-[13px] leading-relaxed text-muted'>
-              {SITE_SUBTITLE} 也可以用 npm run export:mp4 导出成 MP4。
+              全片 {TOTAL_SECONDS.toFixed(1)} 秒，无配音；每一帧都是程序画出来的。
             </span>
           </div>
         </Section>
@@ -87,8 +87,10 @@ export default function App() {
             {GROWTH ? <JumpButton frame={GROWTH.start}>回影片看引子</JumpButton> : null}
           </div>
           <p className='mt-8 max-w-[54ch] text-[15px] leading-relaxed text-muted'>
-            第一幕只是一句引子：复杂可以从一个简单的起点长出来。
-            它不打算讲递归、分形或 L-系统 —— 那些留在这里反而会抢走第二幕的位置。
+            一棵树能说明的只有一件事：复杂可以从一个简单的起点长出来。
+            <span className='mt-2 block text-paper/85'>
+              但知识并不是这样长大的。往下看第二幕。
+            </span>
           </p>
           <details className='mt-6 rounded-2xl border border-moss/12 bg-ink-950/30 px-5 py-4'>
             <summary className='cursor-pointer text-[13px] text-muted transition-colors hover:text-paper'>
