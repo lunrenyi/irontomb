@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { PlantFigure } from '../../viz/plant'
-import { cameraTransform, fitCamera } from '../../viz/camera'
-import { boundsAt, growingTip, planGrowth, segmentsAt } from '../../lib/growth'
+import { cameraTransform, generationFramings, growthCamera } from '../../viz/camera'
+import { budAt, planGrowth } from '../../lib/growth'
 import { DEFAULT_PARAMS, grow, PLANT_GRAMMAR } from '../../lib/lsystem'
 import { easeOut, range } from '../../lib/easing'
+import { useGrowthLayers } from '../../hooks/useGrowthLayers'
 import { Caption, Readout, SHOOT, Statement } from '../FilmChrome'
 import { STAGE_H, STAGE_W } from '../timeline'
 
@@ -18,30 +19,29 @@ const VIEWPORT = { width: STAGE_W, height: STAGE_H }
 export function BranchScene({ frame }: { frame: number }) {
   const plant = useMemo(() => grow(PLANT_GRAMMAR, { ...DEFAULT_PARAMS, originX: 0, originY: 0, length: 78, angle: 30 }, GENERATIONS), [])
   const plan = useMemo(() => planGrowth(plant.segments, GENERATIONS, { perSegment: 0.5, breath: 0.26 }), [plant])
+  const framings = useMemo(() => generationFramings(plan, VIEWPORT, { padding: 1.3, maxScale: 2.6 }), [plan])
 
   const time = easeOut(range(frame, 10, 300))
-  const drawn = segmentsAt(plan, time)
-  const tip = growingTip(plan, time)
-  const cameraBounds = boundsAt(plan, time * 0.94)
-  const camera = fitCamera(cameraBounds, tip, VIEWPORT, { padding: 1.3, maxScale: 2.6, tipWeight: 0.34 })
+  const layers = useGrowthLayers(plan, time)
+  const bud = budAt(plan, time)
+  const camera = growthCamera(plan, framings, time)
 
-  const count = drawn.length
-  const depth = tip ? tip.segment.depth : 0
-  const sway = (x: number) => Math.sin((frame / 30) + x * 0.02) * 1.6
+  const count = layers.done.length + layers.growing.length
+  const depth = bud ? bud.segment.depth : 0
 
   return (
     <>
       <svg width={STAGE_W} height={STAGE_H} viewBox={'0 0 ' + STAGE_W + ' ' + STAGE_H} style={{ position: 'absolute', inset: 0 }}>
         <g transform={cameraTransform(camera, VIEWPORT)}>
           <PlantFigure
-            segments={drawn}
+            done={layers.done}
+            growing={layers.growing}
             maxDepth={plant.levels}
             freshDepth={depth}
-            tip={tip ? { x: tip.x, y: tip.y } : null}
+            tip={bud ? { x: bud.x, y: bud.y } : null}
             tipProgress={range(frame, 10, 30)}
             leaves
             leafFromDepth={3}
-            sway={sway}
           />
         </g>
       </svg>

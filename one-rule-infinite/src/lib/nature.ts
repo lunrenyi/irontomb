@@ -54,6 +54,7 @@ export function buildVeins(opts: { length?: number; width?: number; seed?: numbe
     width: 4.2,
     angle: -90,
     hasChildren: true,
+      parent: -1,
   })
 
   for (let i = 0; i < pairs; i += 1) {
@@ -79,6 +80,7 @@ export function buildVeins(opts: { length?: number; width?: number; seed?: numbe
         width: 1.9,
         angle: startAngle,
         hasChildren: false,
+      parent: -1,
       })
       if (t > 0.18 && t < 0.88) {
         const from = polar(0, y, len * 0.62, startAngle + side * 16)
@@ -97,6 +99,7 @@ export function buildVeins(opts: { length?: number; width?: number; seed?: numbe
           width: 1,
           angle: startAngle + side * 30,
           hasChildren: false,
+      parent: -1,
         })
       }
     }

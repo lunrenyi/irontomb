@@ -4,7 +4,8 @@ import { BranchScene } from './scenes/Branch'
 import { NatureScene } from './scenes/Nature'
 import { LessonScene } from './scenes/Lesson'
 import { DepthScene } from './scenes/Depth'
-import { CircuitScene } from './scenes/Circuit'
+import { TechScene } from './scenes/Tech'
+import { CosmosScene } from './scenes/Cosmos'
 import { clamp01, easeIn, easeOut, range } from '../lib/easing'
 import { SCENE_OVERLAP, SCENE_WINDOWS, STAGE_H, STAGE_W } from './timeline'
 
@@ -14,7 +15,8 @@ const RENDERERS: Record<string, (props: { frame: number }) => JSX.Element> = {
   nature: NatureScene,
   lesson: LessonScene,
   depth: DepthScene,
-  circuit: CircuitScene,
+  tech: TechScene,
+  cosmos: CosmosScene,
 }
 
 /**

@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { PlantFigure } from '../../viz/plant'
 import { DashPath } from '../../viz/parts'
-import { cameraTransform, fitCamera, type Camera } from '../../viz/camera'
-import { boundsAt, growingTip, planGrowth, segmentsAt } from '../../lib/growth'
+import { cameraTransform, generationFramings, growthCamera, lerpCamera, type Camera } from '../../viz/camera'
+import { budAt, growingGenerationAt, grownSegments, growingSegments, planGrowth, type DrawnSegment, type GrowthPlan } from '../../lib/growth'
 import { DEFAULT_PARAMS, grow, PLANT_GRAMMAR } from '../../lib/lsystem'
 import { buildRiver, buildVeins, segmentPath } from '../../lib/nature'
 import { clamp01, easeIn, easeInOut, easeOut, range } from '../../lib/easing'
@@ -14,15 +14,6 @@ const TREE_GEN = 4
 const TREE: [number, number] = [10, 176]
 const VEIN: [number, number] = [176, 330]
 const RIVER: [number, number] = [330, 520]
-
-/** 两个镜头之间插值：位置线性，缩放按对数走，切换时不会忽大忽小 */
-function lerpCamera(a: Camera, b: Camera, t: number): Camera {
-  return {
-    x: a.x + (b.x - a.x) * t,
-    y: a.y + (b.y - a.y) * t,
-    scale: Math.exp(Math.log(a.scale) + (Math.log(b.scale) - Math.log(a.scale)) * t),
-  }
-}
 
 /**
  * 场景 3 · 三种分支
@@ -36,19 +27,22 @@ export function NatureScene({ frame }: { frame: number }) {
   const riverPlan = useMemo(() => planGrowth(river.segments, 5), [river])
   const leaf = useMemo(() => buildVeins({ length: 360, width: 176, secondOrder: 8 }), [])
 
+  const treeFramings = useMemo(() => generationFramings(treePlan, VIEWPORT, { padding: 1.18, maxScale: 2.1 }), [treePlan])
+  const riverFramings = useMemo(() => generationFramings(riverPlan, VIEWPORT, { padding: 1.12, maxScale: 1.45 }), [riverPlan])
+
   const treeTime = easeOut(range(frame, TREE[0], TREE[1]))
   const veinTime = easeOut(range(frame, VEIN[0], VEIN[1]))
   const riverTime = easeOut(range(frame, RIVER[0], RIVER[1]))
 
-  const treeTip = growingTip(treePlan, treeTime)
-  const riverTip = growingTip(riverPlan, riverTime)
-  const treeDrawn = segmentsAt(treePlan, treeTime)
-  const riverDrawn = segmentsAt(riverPlan, riverTime)
+  const treeBud = budAt(treePlan, treeTime)
+  const riverBud = budAt(riverPlan, riverTime)
+  const treeLayers = layersAt(treePlan, treeTime)
+  const riverLayers = layersAt(riverPlan, riverTime)
 
-  // 三段各算一个镜头，在交接处平滑过渡
-  const treeCam = fitCamera(boundsAt(treePlan, treeTime * 0.96), treeTip, VIEWPORT, { padding: 1.18, maxScale: 2.1, tipWeight: 0.3 })
+  // 三个镜头的路线都提前算好，交接处平滑过渡
+  const treeCam = growthCamera(treePlan, treeFramings, treeTime)
   const veinCam: Camera = { x: 0, y: -30, scale: 1.4 }
-  const riverCam = fitCamera(boundsAt(riverPlan, riverTime * 0.96), riverTip, VIEWPORT, { padding: 1.12, maxScale: 1.45, tipWeight: 0.25 })
+  const riverCam = growthCamera(riverPlan, riverFramings, riverTime)
   const toVein = easeInOut(range(frame, TREE[1] - 22, TREE[1] + 26))
   const toRiver = easeInOut(range(frame, VEIN[1] - 22, VEIN[1] + 26))
   const camera = lerpCamera(lerpCamera(treeCam, veinCam, toVein), riverCam, toRiver)
@@ -57,7 +51,6 @@ export function NatureScene({ frame }: { frame: number }) {
   const veinOpacity = easeOut(range(frame, VEIN[0] - 6, VEIN[0] + 30)) * (1 - easeIn(range(frame, VEIN[1] - 24, VEIN[1] + 22)))
   const riverOpacity = easeOut(range(frame, RIVER[0] - 6, RIVER[0] + 30))
 
-  const sway = (x: number, y: number) => Math.sin((frame / 32) + x * 0.02 + y * 0.011) * 1.7
   const labelOpacity = (a: number, b: number) => easeOut(range(frame, a, a + 20)) * (1 - easeIn(range(frame, b - 20, b)))
   const LABEL_FONT = 30
 
@@ -67,14 +60,14 @@ export function NatureScene({ frame }: { frame: number }) {
         <g transform={cameraTransform(camera, VIEWPORT)}>
           <g opacity={treeOpacity}>
             <PlantFigure
-              segments={treeDrawn}
+              done={treeLayers.done}
+              growing={treeLayers.growing}
               maxDepth={tree.levels}
-              freshDepth={treeTip ? treeTip.segment.depth : null}
-              tip={treeTip ? { x: treeTip.x, y: treeTip.y } : null}
+              freshDepth={treeBud ? treeBud.segment.depth : null}
+              tip={treeBud ? { x: treeBud.x, y: treeBud.y } : null}
               tipProgress={range(frame, TREE[0], TREE[0] + 20)}
               leaves
               leafFromDepth={2}
-              sway={sway}
             />
           </g>
 
@@ -101,11 +94,12 @@ export function NatureScene({ frame }: { frame: number }) {
           {/* 河流：越往下越宽，末端散开 */}
           <g opacity={riverOpacity}>
             <PlantFigure
-              segments={riverDrawn}
+              done={riverLayers.done}
+              growing={riverLayers.growing}
               maxDepth={river.levels}
               style='river'
-              freshDepth={riverTip ? riverTip.segment.depth : null}
-              tip={riverTip ? { x: riverTip.x, y: riverTip.y } : null}
+              freshDepth={riverBud ? riverBud.segment.depth : null}
+              tip={riverBud ? { x: riverBud.x, y: riverBud.y } : null}
               tipProgress={range(frame, RIVER[0], RIVER[0] + 20)}
               leaves={false}
             />
@@ -123,18 +117,10 @@ export function NatureScene({ frame }: { frame: number }) {
         河 流
       </div>
 
-      <Statement frame={frame} from={12} to={92} y={806} size={50}>
-        树枝会分叉。
-      </Statement>
-      <Statement frame={frame} from={190} to={268} y={806} size={50}>
-        叶脉也会分叉。
-      </Statement>
-      <Statement frame={frame} from={342} to={420} y={806} size={50}>
-        河流同样会分叉。
-      </Statement>
-      <Statement frame={frame} from={468} to={566} y={786} size={50}>
-        形态很像，但它们不是被同一条规则造出来的。
-      </Statement>
+      <Statement frame={frame} from={12} to={92} y={806} size={50}>树枝会分叉。</Statement>
+      <Statement frame={frame} from={190} to={268} y={806} size={50}>叶脉也会分叉。</Statement>
+      <Statement frame={frame} from={342} to={420} y={806} size={50}>河流同样会分叉。</Statement>
+      <Statement frame={frame} from={468} to={566} y={786} size={50}>形态很像，但它们不是被同一条规则造出来的。</Statement>
       <Caption frame={frame} from={478} to={570} size={36} y={880}>
         树为了采光与支撑，叶脉负责运输，河流靠重力汇流。
         <br />
@@ -142,4 +128,11 @@ export function NatureScene({ frame }: { frame: number }) {
       </Caption>
     </>
   )
+}
+
+
+/** 这一场只渲染一次，计划不会变，所以不需要 React 记忆 */
+function layersAt(plan: GrowthPlan, time: number): { done: DrawnSegment[]; growing: DrawnSegment[] } {
+  const gen = growingGenerationAt(plan, time)
+  return { done: grownSegments(plan, gen - 1), growing: growingSegments(plan, time, gen) }
 }

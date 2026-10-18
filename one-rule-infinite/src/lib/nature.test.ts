@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { buildRiver, buildVeins, leafOutline, riverParams, segmentPath } from './nature'
 import { planGrowth, segmentsAt } from './growth'
-import { fitCamera, cameraTransform, project } from '../viz/camera'
+import { fitBounds, cameraTransform, project, cameraAt, lerpCamera } from '../viz/camera'
 import { boundsCenter, boundsSize, growBounds, EMPTY_BOUNDS, quadAt, polar } from './geometry'
 
 describe('叶脉', () => {
@@ -109,7 +109,7 @@ describe('几何工具', () => {
   it('segmentPath 把一段画成可用的路径', () => {
     const d = segmentPath({
       id: 0, depth: 0, birthGen: 0,
-      x1: 0, y1: 0, x2: 10, y2: 10, cx: 5, cy: 6, width: 2, angle: 45, hasChildren: false,
+      x1: 0, y1: 0, x2: 10, y2: 10, cx: 5, cy: 6, width: 2, angle: 45, hasChildren: false, parent: -1,
     })
     expect(d).toBe('M 0 0 Q 5 6 10 10')
   })
@@ -120,7 +120,7 @@ describe('镜头', () => {
 
   it('把当前结构装进画面，并且不小于 1 倍', () => {
     const bounds = growBounds(growBounds(EMPTY_BOUNDS, -200, -400), 200, 0)
-    const camera = fitCamera(bounds, null, viewport, { padding: 1.1 })
+    const camera = fitBounds(bounds, viewport, { padding: 1.1 })
     const onScreen = project(camera, viewport, bounds.minX, bounds.maxY)
     const other = project(camera, viewport, bounds.maxX, bounds.minY)
     expect(onScreen.x).toBeGreaterThan(0)
@@ -130,7 +130,7 @@ describe('镜头', () => {
 
   it('刚开始长时不会糊成一团（maxScale 生效）', () => {
     const tiny = growBounds(growBounds(EMPTY_BOUNDS, -1, -2), 1, 0)
-    const camera = fitCamera(tiny, null, viewport, { maxScale: 2.5 })
+    const camera = fitBounds(tiny, viewport, { maxScale: 2.5 })
     expect(camera.scale).toBeLessThanOrEqual(2.5)
   })
 
@@ -140,5 +140,22 @@ describe('镜头', () => {
     expect(center.x).toBeCloseTo(viewport.width / 2)
     expect(center.y).toBeCloseTo(viewport.height / 2)
     expect(cameraTransform(camera, viewport)).toContain('scale(2)')
+  })
+
+  it('关键帧镜头只读时间，不读状态：同一时刻给出同一个镜头', () => {
+    const keys = [
+      { at: 0, camera: { x: 0, y: 0, scale: 3 } },
+      { at: 100, camera: { x: 40, y: -120, scale: 0.8 } },
+    ]
+    expect(cameraAt(keys, 50)).toEqual(cameraAt(keys, 50))
+    expect(cameraAt(keys, 50).scale).toBeGreaterThan(cameraAt(keys, 99).scale)
+    expect(cameraAt(keys, -20)).toEqual(keys[0].camera)
+    expect(cameraAt(keys, 999)).toEqual(keys[1].camera)
+  })
+
+  it('镜头插值尺度按对数走，中间恰好是几何平均值', () => {
+    const mid = lerpCamera({ x: 0, y: 0, scale: 4 }, { x: 100, y: 0, scale: 1 }, 0.5)
+    expect(mid.scale).toBeCloseTo(2)
+    expect(mid.x).toBeCloseTo(50)
   })
 })

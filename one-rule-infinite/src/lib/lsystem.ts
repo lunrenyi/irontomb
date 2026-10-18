@@ -17,6 +17,11 @@ export interface Grammar {
   axiom: string
   /** 规则左侧是单个符号；右侧是一串指令 */
   rules: Record<string, string>
+  /**
+  * 「芽点」符号：它不画东西，只表示「这里还要继续长」。
+  * 每一代每个芽点发出 b 个新芽点时，第 n 层芽点数就是 b^n。
+  */
+  bud?: string
 }
 
 /** 教学用的最简规则：一眼能看懂 F / + / - / [ ] 各自做什么 */
@@ -31,6 +36,24 @@ export const PLANT_GRAMMAR: Grammar = {
   name: 'plant',
   axiom: 'X',
   rules: { X: 'F[+X]F[-X][+X]' },
+  bud: 'X',
+}
+
+/**
+ * 每个芽点发出 b 个新芽点的规则。
+ *
+ * b=2 → F[+X]F[-X]（一根主干，两侧一根）
+ * b=3 → F[+X]F[+X]F[-X]（三个方向，交替开芽）
+ * b=4 → 四个方向
+ *
+ * 这样第 n 层的芽点数恰好是 b^n，页面上的统计才能如实地写出。
+ */
+export function plantGrammar(branches: number): Grammar {
+  const b = Math.max(2, Math.min(5, Math.round(branches)))
+  let rule = ''
+  for (let i = 0; i < b - 1; i += 1) rule += 'F[+X]'
+  rule += 'F[-X]'
+  return { name: 'plant-' + b, axiom: 'X', rules: { X: rule }, bud: 'X' }
 }
 
 export const GRAMMARS: Record<string, Grammar> = {
@@ -75,9 +98,51 @@ export function expandTagged(grammar: Grammar, generations: number): string {
   return current
 }
 
+/**
+ * 参数变强时，可以长到多少代还能赶上浏览器。
+ *
+ * b=3 的时候第 6 代就有上千根枝条了，页面会卡。
+ * 这里按「总枝条数」反推一个上限，让滑块不会因为你拖了一下就卡死。
+ */
+export function maxGenerationsFor(branches: number, limit = 420): number {
+  const grammar = plantGrammar(branches)
+  let total = 0
+  for (let n = 1; n <= 8; n += 1) {
+    const counts = fCountsByGeneration(grammar, n)
+    total += counts[n]
+    if (total > limit) return Math.max(1, n - 1)
+  }
+  return 8
+}
+
 /** 只要字符串：给页面上的规则面板用 */
 export function expand(grammar: Grammar, generations: number): string {
   return expandTagged(grammar, generations)
+}
+
+/**
+ * 每一层有多少个「芽点」（还要继续长的那个点）。
+ *
+ * 当每个芽点只产出 b 个新芽点时，这个数列就是 1, b, b^2, b^3, ...
+ * 这是一个尽量化的规则模型，不等于真实植物。
+ */
+export function budCountsByGeneration(grammar: Grammar, generations: number): number[] {
+  const bud = grammar.bud ?? 'X'
+  const counts: number[] = []
+  let current = grammar.axiom
+  for (let g = 0; g <= generations; g += 1) {
+    if (g > 0) {
+      current = current
+        .split('')
+        .map((ch) => grammar.rules[ch] ?? ch)
+        .join('')
+    }
+    let n = 0
+    for (const ch of current) if (ch === bud) n += 1
+    counts.push(n)
+    if (current.length > 400000) break
+  }
+  return counts
 }
 
 export interface Segment {
@@ -98,6 +163,12 @@ export interface Segment {
   angle: number
   /** 这段末端有没有长出下一代 */
   hasChildren: boolean
+  /**
+   * 这段是从哪一段长出来的（海龟栈里的上一段枝条）。
+   * 注意：两个兄弟枝条可以共用同一个父节点。
+   * 它不会被“端点坐标重合”那种方法误判成兄弟关系。
+   */
+  parent: number
 }
 
 export interface GrowParams {
@@ -200,6 +271,8 @@ export function interpret(grammar: Grammar, params: GrowParams, generations: num
   let depth = 0
   let width = params.width
   const stack: { x: number; y: number; angle: number; depth: number; width: number }[] = []
+  // 每开一个 [ 就把当前枝条索引压入栈：它就是这一拓里所有枝条的父节点
+  const branchStack: number[] = []
 
   for (const ch of tokens) {
     if (ch === 'F' || ch === 'G') {
@@ -207,6 +280,7 @@ export function interpret(grammar: Grammar, params: GrowParams, generations: num
       const len = params.length * Math.pow(params.lengthDecay, depth) * wobble
       const bend = params.bend * jitter(rand, params.jitter * 1.3)
       const nextAngle = angle + bend
+      const parent = branchStack.length > 0 ? branchStack[branchStack.length - 1] : -1
       const end = polar(x, y, len, nextAngle)
       const control = curvedControl(x, y, end.x, end.y, bend * 0.9)
       segments.push({
@@ -222,6 +296,7 @@ export function interpret(grammar: Grammar, params: GrowParams, generations: num
         width: Math.max(0.6, width * (1 + jitter(rand, params.jitter * 0.16))),
         angle: nextAngle,
         hasChildren: false,
+        parent,
       })
       x = end.x
       y = end.y
@@ -236,10 +311,12 @@ export function interpret(grammar: Grammar, params: GrowParams, generations: num
       angle = bendTowardLight(angle, params, depth)
       angle = clampDeviation(angle, params)
     } else if (ch === '[') {
+      branchStack.push(segments.length > 0 ? segments[segments.length - 1].id : -1)
       stack.push({ x, y, angle, depth, width })
       depth += 1
       width = Math.max(0.5, width * params.widthDecay)
     } else if (ch === ']') {
+      branchStack.pop()
       const saved = stack.pop()
       if (saved) {
         x = saved.x

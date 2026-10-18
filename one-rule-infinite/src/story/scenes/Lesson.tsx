@@ -1,9 +1,10 @@
 import { useMemo } from 'react'
 import { PlantFigure } from '../../viz/plant'
-import { cameraTransform, fitCamera } from '../../viz/camera'
-import { boundsAt, planGrowth, segmentsAt } from '../../lib/growth'
+import { cameraTransform, generationFramings, growthCamera } from '../../viz/camera'
+import { planGrowth } from '../../lib/growth'
 import { DEFAULT_PARAMS, expand, grow, LESSON_GRAMMAR } from '../../lib/lsystem'
 import { easeOut, range } from '../../lib/easing'
+import { useGrowthLayers } from '../../hooks/useGrowthLayers'
 import { Caption, INK, MUTED, RevealText, SHOOT, Statement } from '../FilmChrome'
 import { STAGE_H, STAGE_W } from '../timeline'
 
@@ -25,27 +26,31 @@ const SYMBOLS = [
  * 每一代都是「把上一代每一个 F 换成右边那一串」。
  */
 export function LessonScene({ frame }: { frame: number }) {
-  const plant = useMemo(() => grow(LESSON_GRAMMAR, { ...DEFAULT_PARAMS, originX: 0, originY: 0, length: 86, width: 9, angle: 25, jitter: 0.06, bend: 3 }, MAX_GEN), [])
+  const plant = useMemo(
+    () => grow(LESSON_GRAMMAR, { ...DEFAULT_PARAMS, originX: 0, originY: 0, length: 86, width: 9, angle: 25, jitter: 0.06, bend: 3 }, MAX_GEN),
+    [],
+  )
   const plan = useMemo(() => planGrowth(plant.segments, MAX_GEN, { perSegment: 0.7, breath: 0.08 }), [plant])
+  const framings = useMemo(() => generationFramings(plan, VIEWPORT, { padding: 1.3, maxScale: 2.3 }), [plan])
 
   // 三代演示：每代一段，各留一点停顿
   const acts = [120, 220, 320]
   const actLength = 100
   const times = acts.map((start, i) => {
     const local = easeOut(range(frame, start, start + actLength))
-    const value = (i + local) / MAX_GEN
-    return value
+    return (i + local) / MAX_GEN
   })
   const time = Math.max(times[0], times[1], times[2])
 
-  const drawn = segmentsAt(plan, time)
-  const camera = fitCamera(boundsAt(plan, Math.max(0.08, time * 0.96)), null, VIEWPORT, { padding: 1.3, maxScale: 2.3 })
+  const layers = useGrowthLayers(plan, time)
+  const camera = growthCamera(plan, framings, time)
 
   const ruleIn = range(frame, 16, 100)
   const symbolIndex = Math.min(SYMBOLS.length - 1, Math.floor(range(frame, 130, 380) * SYMBOLS.length))
   const symbolOpacity = range(frame, 128, 150) * (1 - range(frame, 400, 430))
   const generations = Math.max(1, Math.round(time * MAX_GEN))
   const genOpacity = range(frame, 120, 150)
+  const count = layers.done.length + layers.growing.length
 
   const strings = [0, 1, 2, 3].map((g) => expand(LESSON_GRAMMAR, g))
 
@@ -54,9 +59,10 @@ export function LessonScene({ frame }: { frame: number }) {
       <svg width={STAGE_W} height={STAGE_H} viewBox={'0 0 ' + STAGE_W + ' ' + STAGE_H} style={{ position: 'absolute', inset: 0 }}>
         <g transform={cameraTransform(camera, VIEWPORT)}>
           <PlantFigure
-            segments={drawn}
+            done={layers.done}
+            growing={layers.growing}
             maxDepth={plant.levels}
-            freshDepth={3}
+            freshDepth={layers.generation}
             leaves={false}
             widthScale={0.9}
           />
@@ -82,7 +88,7 @@ export function LessonScene({ frame }: { frame: number }) {
       </div>
 
       <div style={{ position: 'absolute', left: 0, right: 0, top: 760, textAlign: 'center', opacity: genOpacity, fontSize: 30, color: MUTED, letterSpacing: '0.12em' }}>
-        {'第 ' + generations + ' 代 · 共 ' + drawn.length + ' 根枝条'}
+        {'第 ' + generations + ' 代 · 共 ' + count + ' 根枝条'}
       </div>
 
       <Statement frame={frame} from={430} to={500} y={300} size={52}>

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { PlantFigure } from '../viz/plant'
 import { DashPath } from '../viz/parts'
-import { cameraTransform, fitCamera } from '../viz/camera'
-import { boundsAt, planGrowth, segmentsAt } from '../lib/growth'
+import { cameraTransform, fitBounds, generationFramings, growthCamera } from '../viz/camera'
+import { growingGenerationAt, grownSegments, growingSegments, planGrowth } from '../lib/growth'
 import { DEFAULT_PARAMS, grow, PLANT_GRAMMAR } from '../lib/lsystem'
 import { buildRiver, buildVeins, segmentPath } from '../lib/nature'
 import { easeOut, range } from '../lib/easing'
@@ -53,16 +53,24 @@ export function NatureSwitch() {
     return () => cancelAnimationFrame(raf)
   }, [kind, tick, reducedMotion])
 
-  const treeDrawn = useMemo(() => segmentsAt(treePlan, time), [treePlan, time])
-  const riverDrawn = useMemo(() => segmentsAt(riverPlan, time), [riverPlan, time])
   const active = KINDS.find((k) => k.id === kind) as (typeof KINDS)[number]
+
+  // 镜头：三种形态各自的取景，不追踪【正在变化的包围盒】
+  const treeFramings = useMemo(() => generationFramings(treePlan, VIEWPORT, { padding: 1.2, maxScale: 1.9 }), [treePlan])
+  const riverFramings = useMemo(() => generationFramings(riverPlan, VIEWPORT, { padding: 1.14, maxScale: 1.5 }), [riverPlan])
+  const treeGen = growingGenerationAt(treePlan, time)
+  const riverGen = growingGenerationAt(riverPlan, time)
+  const treeDone = useMemo(() => grownSegments(treePlan, treeGen - 1), [treePlan, treeGen])
+  const treeGrowing = useMemo(() => growingSegments(treePlan, time, treeGen), [treePlan, time, treeGen])
+  const riverDone = useMemo(() => grownSegments(riverPlan, riverGen - 1), [riverPlan, riverGen])
+  const riverGrowing = useMemo(() => growingSegments(riverPlan, time, riverGen), [riverPlan, time, riverGen])
 
   const camera =
     kind === 'tree'
-      ? fitCamera(treeDrawn.length > 1 ? boundsAt(treePlan, time * 0.96) : tree.bounds, null, VIEWPORT, { padding: 1.2, maxScale: 1.9 })
+      ? growthCamera(treePlan, treeFramings, time)
       : kind === 'river'
-        ? fitCamera(riverDrawn.length > 1 ? boundsAt(riverPlan, time * 0.96) : river.bounds, null, VIEWPORT, { padding: 1.14, maxScale: 1.5 })
-        : { x: 0, y: -40, scale: 1.15 }
+        ? growthCamera(riverPlan, riverFramings, time)
+        : fitBounds({ minX: -180, minY: -320, maxX: 180, maxY: 60 }, VIEWPORT, { padding: 1.06, maxScale: 1.2 })
 
   return (
     <div>
@@ -70,9 +78,9 @@ export function NatureSwitch() {
         <svg viewBox={'0 0 ' + VIEWPORT.width + ' ' + VIEWPORT.height} className='h-full w-full' role='img' aria-label={active.name + '的程序化生成结果'}>
           <g transform={cameraTransform(camera, VIEWPORT)}>
             {kind === 'tree' ? (
-              <PlantFigure segments={treeDrawn} maxDepth={tree.levels} leaves leafFromDepth={2} />
+              <PlantFigure done={treeDone} growing={treeGrowing} maxDepth={tree.levels} leaves leafFromDepth={2} />
             ) : null}
-            {kind === 'river' ? <PlantFigure segments={riverDrawn} maxDepth={river.levels} style='river' leaves={false} /> : null}
+            {kind === 'river' ? <PlantFigure done={riverDone} growing={riverGrowing} maxDepth={river.levels} style='river' leaves={false} /> : null}
             {kind === 'veins' ? (
               <g transform='translate(0 40)'>
                 <path d={leaf.outline} fill={'#3f8f5a'} fillOpacity={0.1} stroke={'#7fc9a0'} strokeOpacity={0.32} strokeWidth={1.6} />

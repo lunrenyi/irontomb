@@ -25,7 +25,8 @@ export const SCENES: SceneDef[] = [
   { id: 'nature', title: '三种分支', start: seconds(32), duration: seconds(19) },
   { id: 'lesson', title: '规则', start: seconds(50.5), duration: seconds(18) },
   { id: 'depth', title: '从简单到复杂', start: seconds(68), duration: seconds(19) },
-  { id: 'circuit', title: '路径之树', start: seconds(86.5), duration: seconds(17) },
+  { id: 'tech', title: '不只是分叉', start: seconds(86.5), duration: seconds(22) },
+  { id: 'cosmos', title: '宇宙网', start: seconds(108), duration: seconds(25) },
 ]
 
 export const TOTAL_FRAMES = SCENES[SCENES.length - 1].start + SCENES[SCENES.length - 1].duration

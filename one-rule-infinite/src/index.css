@@ -145,12 +145,40 @@ input[type='range'].growth-range::-moz-range-thumb {
   border: 3px solid var(--color-leaf);
 }
 
+/*
+ * 叶子的微小摆动。
+ *
+ * 用 CSS 动画而不是 JS：叶子有上百片，每帧用 React 重算它们的角度早就费爆了。
+ * 这里只是 transform: rotate，浏览器直接在合成器上做，不占 JavaScript 主线。
+ * 时长与相位由叶子位置决定，因此网页与渲染出的画面一致。
+ */
+@keyframes leaf-sway {
+  from {
+    transform: rotate(-1.7deg);
+  }
+  to {
+    transform: rotate(1.7deg);
+  }
+}
+
+.leaf-sway {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: leaf-sway var(--sway-dur, 5.5s) ease-in-out infinite alternate;
+  animation-delay: var(--sway-delay, 0s);
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
 
   .breathe {
+    animation: none;
+  }
+
+  .leaf-sway {
     animation: none;
   }
 }

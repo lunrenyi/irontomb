@@ -4,8 +4,10 @@ import {
   GRAMMARS,
   LESSON_GRAMMAR,
   PLANT_GRAMMAR,
+  budCountsByGeneration,
   expand,
   grow,
+  plantGrammar,
   type GrowParams,
 } from './lsystem'
 import { boundsAt, planGrowth, segmentsAt } from './growth'
@@ -167,20 +169,42 @@ describe('时间与代数的对应关系', () => {
     }
   })
 
-  it('每根枝条分到的时间大致相同：画面不会在最后一代突然卡住', () => {
+  it('每根枝条都能得到足够时间，也不会在最后一代卡住', () => {
     const plant = grow(PLANT_GRAMMAR, params2, 6)
     const plan = planGrowth(plant.segments, 6)
-    const counts: number[] = []
+    const spans: number[] = []
     for (let g = 0; g <= 6; g += 1) {
-      counts.push(plant.atGeneration(g).length - (g > 0 ? plant.atGeneration(g - 1).length : 0))
+      const from = g > 0 ? plan.genEnd[g - 1] : 0
+      const span = plan.genEnd[g] - from
+      if (span > 0) spans.push(span)
     }
-    const pace = counts
-      .map((count, g) => {
-        const span = plan.genEnd[g] - plan.genEnd[g > 0 ? g - 1 : 0]
-        return count > 0 ? span / count : 0
-      })
-      .filter((v) => v > 0)
-    expect(pace.length).toBeGreaterThan(3)
-    expect(Math.max(...pace) / Math.min(...pace)).toBeLessThan(1.25)
+    expect(spans.length).toBeGreaterThan(3)
+    // 每一代都有一个底线，不会出现「第 1 代只得到 1% 的时间」
+    expect(Math.min(...spans)).toBeGreaterThan(0.05)
+    // 总时长仍然受控（剩下的是停顿）
+    expect(plan.finish).toBeCloseTo(1 - 0.12, 5)
+    expect(plan.finish).toBeLessThanOrEqual(1)
+  })
+
+  it('每个节点发出 b 个子节点时，第 n 层的芽点数就是 b^n', () => {
+    for (const b of [2, 3, 4]) {
+      const grammar = plantGrammar(b)
+      const counts = budCountsByGeneration(grammar, 5)
+      expect(counts[0]).toBe(1)
+      for (let n = 0; n <= 5; n += 1) expect(counts[n]).toBe(Math.pow(b, n))
+    }
+  })
+
+  it('枝条数量也真的会随参数变', () => {
+    const two = grow(plantGrammar(2), params2, 4).segments.length
+    const three = grow(plantGrammar(3), params2, 4).segments.length
+    const four = grow(plantGrammar(4), params2, 4).segments.length
+    expect(three).toBeGreaterThan(two)
+    expect(four).toBeGreaterThan(three)
+  })
+
+  it('同一组参数永远长出同一棵树', () => {
+    const g = plantGrammar(3)
+    expect(grow(g, params2, 5).segments[20]).toEqual(grow(g, params2, 5).segments[20])
   })
 })

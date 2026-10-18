@@ -33,6 +33,14 @@ export interface PlanOptions {
   perSegment?: number
   /** 每代之间的呼吸停顿 */
   breath?: number
+  /**
+   * 每代至少分到多少时间。
+   *
+   * 只按枝条数量分配时间的话，第 1 代只有两根枝条，
+   * 全片里只能拿到不到 1%：两根枝条在几帧内长完，镜头也被拉得很急。
+   * 给每代一个底线，节奏就稳住了。
+   */
+  minShare?: number
 }
 
 /** 每一代内部的绘制顺序：先主干，再一级侧枝，最后细枝 */
@@ -46,6 +54,7 @@ function orderWithinGeneration(segments: Segment[]): Segment[] {
 export function planGrowth(segments: Segment[], generations: number, options: PlanOptions = {}): GrowthPlan {
   const perSegment = options.perSegment ?? 0.55
   const breath = options.breath ?? 0.12
+  const minShare = options.minShare ?? 0.07
 
   const byGen: Segment[][] = Array.from({ length: generations + 1 }, () => [])
   for (const s of segments) {
@@ -57,6 +66,7 @@ export function planGrowth(segments: Segment[], generations: number, options: Pl
   const steps: GrowthStep[] = []
   const genEnd: number[] = []
   let cursor = 0
+  const nonEmpty = byGen.filter((list) => list.length > 0).length || 1
 
   for (let g = 0; g <= generations; g += 1) {
     const list = orderWithinGeneration(byGen[g])
@@ -64,7 +74,10 @@ export function planGrowth(segments: Segment[], generations: number, options: Pl
       genEnd[g] = cursor
       continue
     }
-    const share = ((1 - breath) * list.length) / total
+    // 先给每个非空的一代留一个底线，剩下的时间再按枝条数量比例分配
+    const floorTotal = Math.min(0.9, minShare * nonEmpty)
+    const restTotal = Math.max(0, 1 - breath - floorTotal)
+    const share = minShare + (restTotal * list.length) / total
     const slot = (share * perSegment) / list.length
     list.forEach((segment, index) => {
       steps.push({ segment, start: cursor + slot * index, end: cursor + slot * (index + 1) })
@@ -147,4 +160,54 @@ export function growingTip(plan: GrowthPlan, time: number, window = 6): DrawnSeg
     if (seen >= window) break
   }
   return best
+}
+
+/**
+ * 此刻正在生长的那一代。
+ *
+ * plan.steps 本来就是按 birthGen 升序分组的，所以“今天还没长完的那一代”是可以反推的，
+ * 而不用逐帧扫描。镜头与只在这一代上变化。
+ */
+export function growingGenerationAt(plan: GrowthPlan, time: number): number {
+  const t = Math.max(0, time)
+  for (let g = 0; g < plan.genEnd.length; g += 1) {
+    if (t <= plan.genEnd[g] + 1e-9) return g
+  }
+  return plan.generations
+}
+
+/**
+ * 第 g 代及以前长完的枝条（t 恒为 1）。
+ *
+ * 这些是「已经长好的」：无论时间怎么变，它们的几何都不变。
+ * 返回值的身份只依赖代数，因此可以被 React 缓存或直接复用。
+ */
+export function grownSegments(plan: GrowthPlan, gen: number): DrawnSegment[] {
+  const out: DrawnSegment[] = []
+  for (const step of plan.steps) {
+    if (step.segment.birthGen > gen) break
+    const s = step.segment
+    out.push({ segment: s, t: 1, x: s.x2, y: s.y2 })
+  }
+  return out
+}
+
+/** 正在长的那一代：每帧都会变，所以只把它自己交给 React */
+export function growingSegments(plan: GrowthPlan, time: number, gen: number): DrawnSegment[] {
+  const out: DrawnSegment[] = []
+  for (const step of plan.steps) {
+    if (time <= step.start) continue
+    if (step.segment.birthGen !== gen) continue
+    const t = Math.min(1, (time - step.start) / Math.max(1e-6, step.end - step.start))
+    const s = step.segment
+    out.push({ segment: s, t, x: s.x1 + (s.x2 - s.x1) * t, y: s.y1 + (s.y2 - s.y1) * t })
+  }
+  return out
+}
+
+/** 正在生长的芽点（镜头不跟它，只有芽点自己跟着走） */
+export function budAt(plan: GrowthPlan, time: number): DrawnSegment | null {
+  const gen = growingGenerationAt(plan, time)
+  const list = growingSegments(plan, time, gen)
+  return list.length > 0 ? list[list.length - 1] : null
 }
