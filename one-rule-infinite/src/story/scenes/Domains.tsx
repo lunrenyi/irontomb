@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
-import { KnowledgeFigure, K_EDGE } from '../../viz/knowledgefigure'
+import { KnowledgeFigure } from '../../viz/knowledgefigure'
 import { buildKnowledgeGraph, DOMAINS } from '../../lib/knowledge'
 import { easeInOut, range } from '../../lib/easing'
 import { knowledgeFramings, segmentCamera, cameraTransform, VIEWPORT, STAGE_PROGRESS, nodeScaleFor } from '../knowledgeTimeline'
+import { handoffCamera, introPlan } from '../handoff'
 import { Caption, MUTED, SHOOT, Statement } from '../FilmChrome'
 import { STAGE_H, STAGE_W } from '../timeline'
 
@@ -16,13 +17,15 @@ import { STAGE_H, STAGE_W } from '../timeline'
 export function DomainsScene({ frame }: { frame: number }) {
   const graph = useMemo(() => buildKnowledgeGraph(), [])
   const framings = useMemo(() => knowledgeFramings(graph), [graph])
+  // 与第一幕收尾共用同一个镜头，两幕交接处不会有跳变
+  const plan = useMemo(() => introPlan(), [])
 
   const [p0, p1] = STAGE_PROGRESS.domains
   const progress = p0 + (p1 - p0) * easeInOut(range(frame, 30, 400))
 
   const camera = segmentCamera(
     [
-      { at: 0, camera: { x: 0, y: -60, scale: 1.45 } },
+      { at: 0, camera: handoffCamera(plan) },
       { at: 70, camera: framings.root },
       { at: 250, camera: framings.domains },
       { at: 435, camera: framings.domains },
@@ -66,9 +69,6 @@ export function DomainsScene({ frame }: { frame: number }) {
       </Caption>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 900, textAlign: 'center', opacity: range(frame, 380, 420) * 0.55, fontSize: 22, color: '#5c7168' }}>
         接下来这一段，是全片真正想讲的事
-      </div>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 24, textAlign: 'center', opacity: range(frame, 20, 60), fontSize: 22, color: K_EDGE, letterSpacing: '0.2em' }}>
-        第二幕 · 知识如何积累
       </div>
     </>
   )

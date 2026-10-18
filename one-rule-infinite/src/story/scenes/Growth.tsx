@@ -1,15 +1,14 @@
 import { useMemo } from 'react'
 import { PlantFigure, BUD } from '../../viz/plant'
 import { cameraAt, cameraTransform, generationFramings, growthCamera } from '../../viz/camera'
-import { budAt, planGrowth } from '../../lib/growth'
-import { DEFAULT_PARAMS, grow, plantGrammar } from '../../lib/lsystem'
+import { budAt } from '../../lib/growth'
 import { easeInOut, easeOut, range } from '../../lib/easing'
 import { useGrowthLayers } from '../../hooks/useGrowthLayers'
 import { Caption, Title } from '../FilmChrome'
+import { handoffCamera, introPlan, introPlant } from '../handoff'
 import { STAGE_H, STAGE_W } from '../timeline'
 
 const VIEWPORT = { width: STAGE_W, height: STAGE_H }
-const GENERATIONS = 3
 
 /**
  * 第一幕 · 生长（引子，只有十几秒）
@@ -22,10 +21,10 @@ const GENERATIONS = 3
  * 固定种子、稳定 ID、逐代取景、路径描边生长。
  */
 export function GrowthScene({ frame }: { frame: number }) {
-  const grammar = useMemo(() => plantGrammar(3), [])
-  const plant = useMemo(() => grow(grammar, { ...DEFAULT_PARAMS, angle: 27, length: 62, originX: 0, originY: 0 }, GENERATIONS), [grammar])
-  const plan = useMemo(() => planGrowth(plant.segments, GENERATIONS, { perSegment: 0.56, breath: 0.16 }), [plant])
-  const framings = useMemo(() => generationFramings(plan, VIEWPORT, { padding: 1.16, maxScale: 3.4 }), [plan])
+  const plant = useMemo(() => introPlant(), [])
+  const plan = useMemo(() => introPlan(), [])
+  // padding 1.55：树长完之后根部落在 y ≈ 888，不会撞到底部那行字幕
+  const framings = useMemo(() => generationFramings(plan, VIEWPORT, { padding: 1.55, maxScale: 3.4 }), [plan])
 
   const growFrom = 34
   const growTo = 250
@@ -33,8 +32,8 @@ export function GrowthScene({ frame }: { frame: number }) {
   const layers = useGrowthLayers(plan, time)
   const bud = budAt(plan, time)
 
-  // 结尾的镜头落在知识网络的起点上，让第二幕可以无缝接上
-  const handoff = { x: 0, y: -60, scale: 1.45 }
+  // 结尾的镜头正对整棵树的中心（见 handoff.ts），第二幕用它同一个镜头开场
+  const handoff = useMemo(() => handoffCamera(plan), [plan])
   const camera = cameraAt(
     [
       { at: 0, camera: growthCamera(plan, framings, 0) },

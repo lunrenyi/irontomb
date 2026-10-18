@@ -137,7 +137,7 @@ export function KnowledgeFigure({
                 textAnchor={left ? 'end' : right ? 'start' : 'middle'}
                 fill={focused ? '#f6f2e8' : '#a9c0b8'}
                 fontSize={(focused ? 15.5 : 12.5) * u * labelScale(labelOpacity)}
-                opacity={(focused ? 1 : 0.85 * (1 - clamp01(fadeUnfocused))) * labelOpacity}
+                opacity={(focused ? 1 : 0.85 * (1 - clamp01(fadeUnfocused))) * labelOpacity * t}
                 fontWeight={isHub ? 600 : 400}
               >
                 {node.label}
