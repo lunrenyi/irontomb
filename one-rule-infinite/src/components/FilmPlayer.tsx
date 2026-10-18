@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { GrowthFilm } from '../story/Film'
+import { Film } from '../story/Film'
 import { onFilmSeek } from '../story/playerBus'
 import { FPS, SCENES, TOTAL_FRAMES } from '../story/timeline'
 import { useInView } from '../hooks/useInView'
@@ -21,7 +21,7 @@ function chapterAt(frame: number): string {
 
 /**
  * 影片播放器。
- * 只做一件事：用 rAF 把「过去了多少帧」换算成时间，再交给纯函数的 GrowthFilm。
+ * 只做一件事：用 rAF 把「过去了多少帧」换算成时间，再交给纯函数的 Film。
  */
 export function FilmPlayer({ className }: { className?: string }) {
   const reducedMotion = useReducedMotionPreference()
@@ -140,7 +140,7 @@ export function FilmPlayer({ className }: { className?: string }) {
         }}
         className='relative aspect-video w-full overflow-hidden rounded-2xl border border-moss/15 bg-ink-950 shadow-[0_30px_90px_-46px_rgba(125,240,192,0.5)]'
       >
-        <GrowthFilm frame={frame} width={box.width} height={box.height} />
+        <Film frame={frame} width={box.width} height={box.height} />
         <div className='pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/5' />
         {finished ? (
           <button

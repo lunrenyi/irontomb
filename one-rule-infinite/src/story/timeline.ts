@@ -20,13 +20,15 @@ export interface SceneDef {
 const seconds = (s: number) => Math.round(s * FPS)
 
 export const SCENES: SceneDef[] = [
-  { id: 'seed', title: '一颗种子', start: 0, duration: seconds(17) },
-  { id: 'branch', title: '分叉', start: seconds(16.5), duration: seconds(16) },
-  { id: 'nature', title: '三种分支', start: seconds(32), duration: seconds(19) },
-  { id: 'lesson', title: '规则', start: seconds(50.5), duration: seconds(18) },
-  { id: 'depth', title: '从简单到复杂', start: seconds(68), duration: seconds(19) },
-  { id: 'tech', title: '不只是分叉', start: seconds(86.5), duration: seconds(22) },
-  { id: 'cosmos', title: '宇宙网', start: seconds(108), duration: seconds(25) },
+  // 第一幕 · 生长（约 10%）：只做引子，把接力棒交给第二幕
+  { id: 'growth', title: '枝条', start: 0, duration: seconds(11) },
+  // 第二幕 · 知识（约 63%）：全片的主体与高潮
+  { id: 'domains', title: '五个方向', start: seconds(10.5), duration: seconds(16) },
+  { id: 'fields', title: '积累', start: seconds(25.5), duration: seconds(19) },
+  { id: 'network', title: '连接', start: seconds(43.5), duration: seconds(17) },
+  { id: 'phone', title: '智能手机', start: seconds(59.5), duration: seconds(23) },
+  // 第三幕 · 群星（约 27%）：把视野拉到宇宙，再回到人
+  { id: 'cosmos', title: '星海', start: seconds(81.5), duration: seconds(31) },
 ]
 
 export const TOTAL_FRAMES = SCENES[SCENES.length - 1].start + SCENES[SCENES.length - 1].duration

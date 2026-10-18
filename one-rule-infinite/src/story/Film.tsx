@@ -1,21 +1,19 @@
 import { FilmBackdrop } from '../viz/backdrop'
-import { SeedScene } from './scenes/Seed'
-import { BranchScene } from './scenes/Branch'
-import { NatureScene } from './scenes/Nature'
-import { LessonScene } from './scenes/Lesson'
-import { DepthScene } from './scenes/Depth'
-import { TechScene } from './scenes/Tech'
+import { GrowthScene } from './scenes/Growth'
+import { DomainsScene } from './scenes/Domains'
+import { FieldsScene } from './scenes/Fields'
+import { NetworkScene } from './scenes/Network'
+import { PhoneScene } from './scenes/Phone'
 import { CosmosScene } from './scenes/Cosmos'
 import { clamp01, easeIn, easeOut, range } from '../lib/easing'
 import { SCENE_OVERLAP, SCENE_WINDOWS, STAGE_H, STAGE_W } from './timeline'
 
 const RENDERERS: Record<string, (props: { frame: number }) => JSX.Element> = {
-  seed: SeedScene,
-  branch: BranchScene,
-  nature: NatureScene,
-  lesson: LessonScene,
-  depth: DepthScene,
-  tech: TechScene,
+  growth: GrowthScene,
+  domains: DomainsScene,
+  fields: FieldsScene,
+  network: NetworkScene,
+  phone: PhoneScene,
   cosmos: CosmosScene,
 }
 
@@ -25,7 +23,7 @@ const RENDERERS: Record<string, (props: { frame: number }) => JSX.Element> = {
  * 它只接受一个 frame —— 不读时钟、不读滚动、不用定时器、不用随机数。
  * 同一帧永远得到同一画面：Remotion 渲染出的 MP4 与浏览器里播放的是同一部片子。
  */
-export function GrowthFilm({
+export function Film({
   frame,
   width = STAGE_W,
   height = STAGE_H,

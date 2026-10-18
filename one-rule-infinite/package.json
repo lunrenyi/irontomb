@@ -11,8 +11,8 @@
     "typecheck": "tsc -b --pretty",
     "test": "vitest run",
     "film:preview": "remotion studio remotion/index.ts",
-    "film:still": "remotion still remotion/index.ts Growth out/still.png --frame=600",
-    "export:mp4": "remotion render remotion/index.ts Growth out/one-rule-infinite.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --log=info"
+    "film:still": "remotion still remotion/index.ts FromBranchesToStars out/still.png --frame=2000",
+    "export:mp4": "remotion render remotion/index.ts FromBranchesToStars out/from-branches-to-stars.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --log=info"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.536",

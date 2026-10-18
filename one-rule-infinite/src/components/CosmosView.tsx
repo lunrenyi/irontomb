@@ -84,9 +84,9 @@ export function CosmosView() {
             真实宇宙里，星系就是这样分布的：物质先塌缩成团，团与团之间沿捷径连成丝，
             丝与丝之间留下巨大的空洞。
           </p>
-          <p className='mt-3 text-[13px] leading-relaxed text-paper/80'>
-            它和树枝、技术网络看起来有几分相似，
-            <span className='text-bud'>但成因完全不同 —— 靠的是引力下物质的长期演化，不是那条分叉规则。</span>
+            <p className='mt-3 text-[13px] leading-relaxed text-paper/80'>
+            它和树枝、知识网络看起来有几分相似，
+            <span className='text-bud'>但成因完全不同 —— 一个靠分叉规则，一个靠连接与积累，一个靠引力下的物质演化。</span>
           </p>
         </div>
 

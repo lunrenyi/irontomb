@@ -1,95 +1,143 @@
 import { useMemo } from 'react'
 import { CosmosFigure } from '../../viz/cosmosfigure'
-import { TechFigure, techReveal } from '../../viz/techfigure'
-import { cameraAt, cameraTransform, fitBounds, lerpCamera, type CameraKey } from '../../viz/camera'
+import { KnowledgeFigure, K_EDGE } from '../../viz/knowledgefigure'
+import { buildKnowledgeGraph } from '../../lib/knowledge'
 import { buildCosmosWeb, cosmosStats } from '../../lib/cosmos'
-import { buildTechGraph } from '../../lib/techgraph'
-import { easeIn, easeOut, range } from '../../lib/easing'
-import { Caption, MUTED, SHOOT, Statement } from '../FilmChrome'
+import { cameraAt, cameraTransform, fitBounds, lerpCamera } from '../../viz/camera'
+import { knowledgeFramings } from '../knowledgeTimeline'
+import { clamp01, easeIn, easeInOut, easeOut, range } from '../../lib/easing'
+import { Caption, INK, MUTED, SHOOT, Statement } from '../FilmChrome'
 import { STAGE_H, STAGE_W } from '../timeline'
 
 const VIEWPORT = { width: STAGE_W, height: STAGE_H }
 
+/** 第三幕用来回扣的三个节点：观测、计算、电磁理论 */
+const RECALL = ['d2', 'd3', 'cs0']
+
 /**
- * 场景 7 · 从知识网络到宇宙网
+ * 第三幕 · 群星
  *
- * 这不是「把科技树缩小塞进星空」。
- * 镜头继续沿着上一场的轨迹往外退，技术网络淡出，
- * 一个**完全不同**的程序生成结构接管画面：丝状结构、团块、大片空洞。
- *
- * 两者只做结构上的对照，不做任何因果暗示：
- * 宇宙的大尺度结构由引力与物质演化决定，和分叉规则没有关系。
+ * 这一幕分三步，而且第三步最容易被做错：
+ *   1. 镜头从知识网络继续往外退，网络淡出 —— 这是**视角**在变，不是「科技树变成了宇宙」；
+ *   2. 一个**完全独立生成**的宇宙网浮现（丝线、团块、空洞），并标明是示意；
+ *   3. 知识网络里的「观测 / 计算 / 电磁」重新出现，
+ *      说明我们正是用积累起来的知识与工具在认识它 ——
+ *      而不是说两者有相同的形成机制。
  */
 export function CosmosScene({ frame }: { frame: number }) {
   const web = useMemo(() => buildCosmosWeb(), [])
   const stats = useMemo(() => cosmosStats(web), [web])
-  const graph = useMemo(() => buildTechGraph(), [])
-  const reveal = useMemo(() => techReveal(graph), [graph])
+  const graph = useMemo(() => buildKnowledgeGraph(), [])
 
-  const keys = useMemo<CameraKey[]>(() => {
-    // 起点与上一场的收尾取景一致：观众看到的是同一次「后退」的延续
-    const start = fitBounds(graph.bounds, VIEWPORT, { padding: 1.14, maxScale: 1.5 })
-    const end = fitBounds(web.bounds, VIEWPORT, { padding: 1.06, maxScale: 1.4 })
-    return [
-      { at: 0, camera: start },
-      { at: 210, camera: lerpCamera(start, end, 0.55) },
-      { at: 400, camera: end },
-      { at: 760, camera: end },
-    ]
-  }, [graph, web])
-  const camera = cameraAt(keys, frame)
+  // 起点与上一幕的收尾取景一致：观众看到的是同一次「后退」的延续
+  // 必须和第二幕收尾用的是同一个取景，否则两幕相接的地方会突然跳一次镜头
+  const whole = useMemo(() => knowledgeFramings(graph).whole, [graph])
+  const deep = useMemo(() => fitBounds(web.bounds, VIEWPORT, { padding: 1.05, maxScale: 1.25 }), [web])
 
-  // 科技网络淡出：节点缩成远处的一点，线先散
-  const techFade = 1 - easeIn(range(frame, 10, 168))
+  const camera = cameraAt(
+    [
+      { at: 0, camera: whole },
+      { at: 230, camera: lerpCamera(whole, deep, 0.5) },
+      { at: 420, camera: deep },
+      { at: 900, camera: deep },
+    ],
+    frame,
+    easeInOut,
+  )
+
+  // 知识网络淡出：节点缩成远处的光点，线先散
+  const netFade = 1 - easeIn(range(frame, 20, 190))
   // 宇宙网入场：星场 -> 丝线 -> 团块，跟镜头后退的方向一致
-  const cosmosIn = easeOut(range(frame, 130, 500))
-  const statsIn = range(frame, 500, 560) * (1 - range(frame, 690, 726))
+  const cosmosIn = easeOut(range(frame, 150, 520))
 
+  // 第三步：三个知识节点重新亮起，并用一条虚线指向宇宙网
+  const recallIn = range(frame, 560, 640) * (1 - range(frame, 672, 742))
   return (
     <>
       <svg width={STAGE_W} height={STAGE_H} viewBox={'0 0 ' + STAGE_W + ' ' + STAGE_H} style={{ position: 'absolute', inset: 0 }}>
         <g transform={cameraTransform(camera, VIEWPORT)}>
-          <g opacity={techFade}>
-            <TechFigure graph={graph} reveal={reveal} progress={1} labels={false} cameraScale={camera.scale} nodeScale={1.5 - techFade * 0.85} />
-          </g>
+          {netFade > 0.01 ? (
+            <g opacity={netFade}>
+              <KnowledgeFigure graph={graph} progress={1} labels={false} cameraScale={camera.scale} nodeScale={1.5 - netFade * 1.0} />
+            </g>
+          ) : null}
           <CosmosFigure web={web} progress={cosmosIn} />
+
+          {/* 我们的知识与工具：三条射线从下方射向宇宙网 */}
+          {recallIn > 0.01 ? (
+            <g opacity={recallIn}>
+              {RECALL.map((id, i) => {
+                const node = graph.byId[id]
+                const t = clamp01(range(frame, 570 + i * 40, 630 + i * 40))
+                if (t <= 0) return null
+                const toX = node.x * 0.35
+                const toY = (node.y + 260) * 0.35 - 120
+                return (
+                  <g key={id}>
+                    <line
+                      x1={node.x}
+                      y1={node.y}
+                      x2={toX}
+                      y2={toY}
+                      stroke={K_EDGE}
+                      strokeWidth={1.8}
+                      strokeOpacity={0.55 * t}
+                      strokeDasharray={'6 10'}
+                    />
+                    <circle cx={node.x} cy={node.y} r={6} fill={K_EDGE} opacity={0.9 * t} />
+                    <circle cx={node.x} cy={node.y} r={18} fill={K_EDGE} opacity={0.14 * t} />
+                    <text x={node.x} y={node.y + 34} textAnchor='middle' fill={'#9fb9b0'} fontSize={22} opacity={0.8 * t}>
+                      {node.label}
+                    </text>
+                  </g>
+                )
+              })}
+            </g>
+          ) : null}
         </g>
       </svg>
 
-      <div
-        style={{
-          position: 'absolute', right: 96, top: 120, opacity: statsIn,
-          fontSize: 24, color: MUTED, textAlign: 'right', lineHeight: 1.8, letterSpacing: '0.06em',
-        }}
-      >
+      <div style={{ position: 'absolute', right: 96, top: 60, opacity: range(frame, 200, 250) * (1 - range(frame, 560, 620)), fontSize: 22, color: '#7f93a8', letterSpacing: '0.14em' }}>
+        宇宙网结构示意 · 受宇宙网启发的程序化可视化
+      </div>
+      <div style={{ position: 'absolute', right: 96, top: 108, opacity: range(frame, 300, 360) * (1 - range(frame, 520, 570)), fontSize: 24, color: MUTED, textAlign: 'right', lineHeight: 1.7, letterSpacing: '0.06em' }}>
         <div>{stats.knots} 个聚集区 · {stats.filaments} 条丝线</div>
         <div>{Math.round(stats.voidShare * 100)}% 的画面是空的</div>
       </div>
 
-      <div
-        style={{
-          position: 'absolute', right: 96, top: 62, opacity: range(frame, 140, 200) * (1 - range(frame, 660, 710)),
-          fontSize: 22, color: '#6f8391', letterSpacing: '0.16em',
-        }}
-      >
-        宇宙网结构示意 · 受宇宙网启发的程序化可视化
-      </div>
+      <Statement frame={frame} from={30} to={110} y={806} size={50}>
+        把镜头继续往外拉。
+      </Statement>
+      <Statement frame={frame} from={140} to={220} y={806} size={50}>
+        节点变成远处的光点，连接线渐渐淡去。
+      </Statement>
+      <Statement frame={frame} from={268} to={344} y={806} size={52}>
+        在更大的尺度上，宇宙也有自己的网络。
+      </Statement>
+      <Statement frame={frame} from={380} to={464} y={806} size={48}>
+        星系结成团块，团块连成丝，中间留下巨大的空洞。
+      </Statement>
+      <Statement frame={frame} from={478} to={556} y={806} size={46} color={'#8fa4d8'}>
+        它的成因不是分叉规则，而是引力下的物质演化。
+      </Statement>
+      <Statement frame={frame} from={600} to={684} y={806} size={48} color={SHOOT}>
+        而认识它，靠的正是我们积累起来的知识与工具。
+      </Statement>
 
-      <Statement frame={frame} from={30} to={108} y={806} size={50}>镜头一直往外退，节点变成了远处的光点。</Statement>
-      <Statement frame={frame} from={140} to={228} y={806} size={50}>连线散开之后，剩下的空间里有东西。</Statement>
-      <Statement frame={frame} from={268} to={360} y={806} size={54} color={SHOOT}>物质先聚成团，再沿捷径连成丝，中间留下巨大的空洞。</Statement>
-      <Caption frame={frame} from={280} to={372} size={36}>
-        这就是宇宙网：星系并不均匀分布，而是织成一张网。
+      <Caption frame={frame} from={478} to={570} size={34}>
+        知识网络与宇宙网并不是同一种东西：
         <br />
-        它的成因是引力作用下物质的长期演化，不是分叉规则。
+        前者由人类的探索与积累连成，后者由引力塑造。
       </Caption>
-      <Statement frame={frame} from={420} to={502} y={806} size={50}>它和树枝、网络，长得确实有几分像。</Statement>
-      <Statement frame={frame} from={534} to={620} y={806} size={52} color={SHOOT}>但长得像，从来不等于成因一样。</Statement>
-      <Caption frame={frame} from={546} to={650} size={36}>
-        从一根枝条，到一张知识网络，再到宇宙中的巨大结构：
+
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 360, textAlign: 'center', opacity: range(frame, 716, 776), fontSize: 54, color: INK, letterSpacing: '0.1em', lineHeight: 1.4 }}>
+        我们用知识连接已知，
         <br />
-        我们可以比较它们怎么组织、怎么连接、怎么演化 —— 但要说清楚的是，这三者的成因各不相同。
-      </Caption>
+        再用已知探索未知。
+      </div>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 560, textAlign: 'center', opacity: range(frame, 812, 872), fontSize: 40, color: SHOOT, letterSpacing: '0.1em' }}>
+        下一条连接，会带我们发现什么？
+      </div>
     </>
   )
 }
