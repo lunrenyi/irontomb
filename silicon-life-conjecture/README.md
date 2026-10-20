@@ -15,7 +15,7 @@ npm install
 npm run dev          # 开发服务器（端口 5176）
 npm run build        # 类型检查 + 生产构建
 npm run preview      # 预览构建结果
-npm test             # 83 个单元测试
+npm test             # 84 个单元测试
 ```
 
 导出无配音 MP4：
@@ -67,6 +67,21 @@ npm run film:still       # 导出单帧 PNG
 主视觉区、关键概念区、底部字幕区三块互不重叠。任何一条字幕排不下、
 两条字幕撞在一起、某一拍被字幕撑爆，都会在 `npm test` 里报出来。
 
+### 三块纵向分区与转场
+
+每一幕的画面按**纵向三块**排布，互不遮挡（第四幕的数值在 `src/story/layout.ts`）：
+
+1. **主视觉区** —— 正在动的那个对象；
+2. **关键概念区** —— 章节里那一句话/公式，不是旁白字幕；
+3. **底部字幕区** —— 完整解释句。
+
+幕与幕之间用**压黑转场**（dip-to-black）：旧画面先淡到黑、黑场里新画面再淡入。
+所以任一时刻最多只有一个幕的文字在画面上，不会出现两幕文字交叠。
+
+`npm test` 里有一条回归测试（`src/story/timeline.test.ts`）专门盯着第四幕：
+断言关键文字底边 < 阶段条顶边、阶段条文字 < 主视觉顶边、主视觉底边不侵入字幕带，
+并且所有第四幕关键文字都落在 `COMPUTER_KEY_Y` 这一行上。
+
 ---
 
 ## 这些画面是真算出来的，不是播动画
@@ -84,7 +99,7 @@ npm run film:still       # 导出单帧 PNG
 | 采样与量化 | `src/lib/signal.ts` | 波形采样、量化、二值化、比特翻回字符 |
 | 碳与硅 | `src/lib/atoms.ts` | 真实数据：原子序数、电子排布、键长 154 vs 235 pm、键能 348 vs 226 kJ/mol；CH4 / SiH4 / CO2 / SiO2 的结构 |
 
-`npm test` 里有 83 个测试，覆盖上面每一项的性质（比如「四位加法器在全部 256 种输入下等于真正的加法」）。
+`npm test` 里有 84 个测试，覆盖上面每一项的性质（比如「四位加法器在全部 256 种输入下等于真正的加法」）。
 
 ### 确定性
 
@@ -138,6 +153,20 @@ qa/             CDP 截图脚本（复用同一个 headless 浏览器，不新�
 ```bash
 ffmpeg -i out/silicon-life-conjecture.mp4 -vf "select='not(mod(n\,300))',scale=560:-1,tile=4x4" -frames:v 1 -y qa/mp4/contact-sheet.png
 ```
+
+### 文字重叠检查（QA）
+
+只靠肉眼看整片会漏掉几十帧里才出现一次的重叠，所以有两个脚本直接量真实 DOM：
+
+```bash
+# 扫指定帧段里每一对文字框的重叠（阈值：较小框面积的 12%），并报出界的文字
+SLC_SETTLE=100 node qa/collide.mjs 4215 6280 13
+
+# 找 <svg> 里的 <StageLabel> 之类被塞成 0x0 的死标签
+node qa/labelprobe.mjs
+```
+
+两者都通过 `browser-guard.sh` 复用同一个 headless 浏览器，不新开进程。
 
 ---
 

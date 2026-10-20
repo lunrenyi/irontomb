@@ -228,48 +228,51 @@ export function RippleAdderFigure({
   const result = rippleAdd4(a, b)
   const ab = bitsOf(a)
   const bb = bitsOf(b)
-  const cellW = 168 * scale
-  const cellH = 128 * scale
+  // scale 只由下面 <g> 的 transform 施加一次。
+  // 以前这里把 scale 又乘进了每一个坐标，transform 里还再来一次，等于被放大了 scale² 倍：
+  // scale=2.2 时整条进位链宽 3200 多像素，从画面中间一直铺到屏幕外面，只剩最左边一级可见。
+  const cellW = 168
+  const cellH = 128
   return (
     <g transform={'translate(' + x + ' ' + y + ') scale(' + scale + ')'}>
-      <line x1={-46} y1={0} x2={-16} y2={0} stroke={CIRCUIT} strokeWidth={2.4} opacity={0.7} />
+      <line x1={-46} y1={0} x2={-16} y2={0} stroke={CIRCUIT} strokeWidth={2.4 / scale} opacity={0.7} />
       <text x={-52} y={6} fill={MUTED} fontSize={22} fontFamily={MONO}>
         进位
       </text>
       {result.stages.map((stage, i) => {
         const done = i < progress
-        const cx = i * cellW + 76 * scale
+        const cx = i * cellW + cellW / 2
         return (
           <g key={i}>
             <rect
-              x={i * cellW + 8 * scale}
+              x={i * cellW + 8}
               y={-cellH / 2}
-              width={cellW - 16 * scale}
+              width={cellW - 16}
               height={cellH}
               rx={14}
               fill={done ? alpha(AMBER, 0.08) : alpha(DEEP, 0.8)}
               stroke={done ? alpha(AMBER, 0.5) : alpha(CIRCUIT, 0.3)}
               strokeWidth={1.8}
             />
-            <text x={cx} y={-cellH / 2 + 26 * scale} fill={done ? AMBER : MUTED} fontSize={16 * scale} fontFamily={MONO} textAnchor='middle'>
+            <text x={cx} y={-cellH / 2 + 26} fill={done ? AMBER : MUTED} fontSize={16} fontFamily={MONO} textAnchor='middle'>
               第 {i} 位 全加器
             </text>
-            <text x={cx - 46 * scale} y={-14 * scale} fill={ab[i] ? AMBER : FAINT} fontSize={22 * scale} fontFamily={MONO} textAnchor='middle'>
+            <text x={cx - 46} y={-14} fill={ab[i] ? AMBER : FAINT} fontSize={22} fontFamily={MONO} textAnchor='middle'>
               {ab[i]}
             </text>
-            <text x={cx - 46 * scale} y={30 * scale} fill={bb[i] ? AMBER : FAINT} fontSize={22 * scale} fontFamily={MONO} textAnchor='middle'>
+            <text x={cx - 46} y={30} fill={bb[i] ? AMBER : FAINT} fontSize={22} fontFamily={MONO} textAnchor='middle'>
               {bb[i]}
             </text>
-            <text x={cx - 58 * scale} y={-8 * scale} fill={MUTED} fontSize={14 * scale} textAnchor='end'>
+            <text x={cx - 58} y={-8} fill={MUTED} fontSize={14} textAnchor='end'>
               a
             </text>
-            <text x={cx - 58 * scale} y={36 * scale} fill={MUTED} fontSize={14 * scale} textAnchor='end'>
+            <text x={cx - 58} y={36} fill={MUTED} fontSize={14} textAnchor='end'>
               b
             </text>
-            <text x={cx + 46 * scale} y={10 * scale} fill={done && stage.sum ? AMBER : FAINT} fontSize={22 * scale} fontFamily={MONO} textAnchor='middle'>
+            <text x={cx + 46} y={10} fill={done && stage.sum ? AMBER : FAINT} fontSize={22} fontFamily={MONO} textAnchor='middle'>
               {done ? stage.sum : '?'}
             </text>
-            <text x={cx + 62 * scale} y={16 * scale} fill={MUTED} fontSize={14 * scale}>
+            <text x={cx + 62} y={16} fill={MUTED} fontSize={14}>
               和
             </text>
             {i < result.stages.length - 1 || result.cout ? (
@@ -280,9 +283,9 @@ export function RippleAdderFigure({
                   x2={cx}
                   y2={cellH / 2}
                   stroke={done && stage.cout ? AMBER : alpha(CIRCUIT, 0.35)}
-                  strokeWidth={2.2}
+                  strokeWidth={2.2 / scale}
                 />
-                <text x={cx + 10 * scale} y={cellH / 2 - 8 * scale} fill={done && stage.cout ? AMBER : FAINT} fontSize={15 * scale} fontFamily={MONO}>
+                <text x={cx + 10} y={cellH / 2 - 8} fill={done && stage.cout ? AMBER : FAINT} fontSize={15} fontFamily={MONO}>
                   进位 {done ? stage.cout : '?'}
                 </text>
               </g>
@@ -290,7 +293,7 @@ export function RippleAdderFigure({
           </g>
         )
       })}
-      <text x={result.stages.length * cellW - 40 * scale} y={-cellH / 2 - 14 * scale} fill={AMBER} fontSize={20 * scale} fontFamily={MONO} textAnchor='end'>
+      <text x={result.stages.length * cellW - 40} y={-cellH / 2 - 14} fill={AMBER} fontSize={20} fontFamily={MONO} textAnchor='end'>
         {a} + {b} = {result.sum}
         {result.cout ? '（最高位进位 ' + result.cout + '）' : ''}
       </text>

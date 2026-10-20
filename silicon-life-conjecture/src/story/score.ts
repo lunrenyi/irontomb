@@ -11,6 +11,7 @@
  * 一条字幕尽量只说一件事，读完不超时再换画面。
  */
 import type { BeatSpec } from './cues'
+import { COMPUTER_KEY_Y } from './layout'
 
 export const SCORE: Record<string, BeatSpec[]> = {
   /* ---------------------------------------------------- 第一幕：0 和 1 */
@@ -108,14 +109,14 @@ export const SCORE: Record<string, BeatSpec[]> = {
     { min: 4.7, cues: [{ text: '第四步，结果写回寄存器，再存进内存。' }] },
     { min: 4.5, cues: [{ text: '第五步，结果交给输出设备：12 + 30 = 42。' }] },
     { min: 3.3, cues: [{ text: '整套过程没有一步是「看起来像」。' }] },
-    { min: 3.9, key: { text: '42', tone: 'number' } },
-    { min: 4.1, key: { text: '55', tone: 'number' }, cues: [{ text: '换成别的程序，同一台机器就做别的事：先求和。' }] },
-    { min: 4.1, key: { text: '1010', tone: 'number' }, cues: [{ text: '再把一张图二值化。' }] },
-    { min: 4.1, key: { text: 'SILICON', tone: 'number' }, cues: [{ text: '再算字符编码。' }] },
-    { min: 4.1, key: { text: '类别 0', tone: 'number' }, cues: [{ text: '再做一次三分类打分。' }] },
+    { min: 3.9, key: { text: '42', tone: 'number', y: COMPUTER_KEY_Y } },
+    { min: 4.1, key: { text: '55', tone: 'number', y: COMPUTER_KEY_Y }, cues: [{ text: '换成别的程序，同一台机器就做别的事：先求和。' }] },
+    { min: 4.1, key: { text: '1010', tone: 'number', y: COMPUTER_KEY_Y }, cues: [{ text: '再把一张图二值化。' }] },
+    { min: 4.1, key: { text: 'SILICON', tone: 'number', y: COMPUTER_KEY_Y }, cues: [{ text: '再算字符编码。' }] },
+    { min: 4.1, key: { text: '类别 0', tone: 'number', y: COMPUTER_KEY_Y }, cues: [{ text: '再做一次三分类打分。' }] },
     {
       min: 4.9,
-      key: { text: '五件不同的事', tone: 'formula', y: 96 },
+      key: { text: '五件不同的事', tone: 'formula', y: COMPUTER_KEY_Y },
       cues: [
         { text: '硬件架构、程序、算法、训练过程与运行时机制，是五件不同的事。' },
         { text: '能力来自后面这些，而不是从芯片里自动长出来。', note: true },

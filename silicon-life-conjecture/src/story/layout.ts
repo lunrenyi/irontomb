@@ -77,6 +77,26 @@ export function captionBandTop(lines: number, size: number = CAPTION.size): numb
   return STAGE.y + STAGE.h - captionBandHeight(lines, size)
 }
 
+/* ---------------------------------------------------------- 第四幕的版面节奏 */
+
+/**
+ * 第四幕专用：画面上缘留给关键文字的那条带子。
+ *
+ * 这一幕几乎每一拍都会同时出现「一句关键文字」和「一张主视觉图」，
+ * 所以上缘必须留一条任何一拍都不占用的带子，其余版面整体往下让。
+ * score.ts 里第四幕所有 key 的 y 都取这个值，两边不会各写一个数字而走偏。
+ */
+export const COMPUTER_KEY_Y = 66
+
+/** 关键文字带的高度（最大字号 keyNum 74 x 行高 1.35） */
+export const COMPUTER_KEY_BOTTOM = COMPUTER_KEY_Y + Math.round(TYPE.keyNum * 1.35)
+
+/** 第四幕的三个版面区，彼此不重叠：关键文字带 -> 阶段条 -> 主视觉 */
+export const COMPUTER_PHASE = { cy: 200, labelY: 252, top: 172 } // 阶段圆点的上缘
+// 高度是倒推出来的：机器图 viewBox 里最后一块墨迹在 y=765（输入输出设备底边），
+// 要让它的底边停在这一幕字幕带的上沿之上，就不能超过这个数。
+export const COMPUTER_STAGE = { top: 272, height: 636 }
+
 /* ------------------------------------------------------------- 文字度量 */
 
 /** 一个字符大约多宽（相对字号） */

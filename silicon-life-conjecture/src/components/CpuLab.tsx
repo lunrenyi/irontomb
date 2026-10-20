@@ -66,7 +66,7 @@ export function CpuLab() {
     <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-10'>
       <div>
         <div className='glass-panel overflow-hidden rounded-2xl p-2'>
-          <div className='aspect-[1720/800] w-full'>
+          <div className='aspect-[1720/738] w-full'>
             <CpuMachineFigure machine={machine} progress={0.5} />
           </div>
         </div>

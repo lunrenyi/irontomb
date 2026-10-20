@@ -72,6 +72,12 @@ export function StageLabel({
   anchor = 'start',
   leader,
   mono = false,
+  /**
+   * 标签被放进 <svg> 里时必须画成 <text>。
+   * React 会照着父节点的命名空间建元素：<svg> 里的 <div> 会被建成 SVG 命名空间的 div，
+   * 而 SVG 根本没有画 div 的规则 —— 结果是 getBoundingClientRect() 返回 0x0，字根本不出现。
+   */
+  inSvg = false,
 }: {
   frame: number
   from: number
@@ -85,11 +91,29 @@ export function StageLabel({
   /** 从标签拉一条细线指向对象 */
   leader?: { x: number; y: number }
   mono?: boolean
+  inSvg?: boolean
 }) {
   const fade = 12
   const opacity = easeOut(range(frame, from, from + fade)) * (1 - easeIn(range(frame, to - fade, to)))
   if (opacity <= 0.004) return null
   const shift = anchor === 'middle' ? '-50%' : anchor === 'end' ? '-100%' : '0'
+  if (inSvg) {
+    return (
+      <text
+        x={x}
+        y={y}
+        fill={color}
+        fontSize={size}
+        fontFamily={mono ? MONO : SANS}
+        letterSpacing={mono ? '0.16em' : '0.12em'}
+        textAnchor={anchor === 'start' ? undefined : anchor}
+        opacity={opacity}
+        pointerEvents='none'
+      >
+        {children}
+      </text>
+    )
+  }
   return (
     <>
       {leader ? (

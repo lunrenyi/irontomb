@@ -6,7 +6,9 @@
  */
 
 export const VIEW_W = 1720
-export const VIEW_H = 800
+/** 真正画了东西的范围是 y 34…772，上下这段留白不算内容 */
+export const VIEW_Y = 34
+export const VIEW_H = 738
 
 export interface Box {
   x: number
@@ -16,15 +18,17 @@ export interface Box {
 }
 
 export const MEMORY: Box = { x: 90, y: 60, w: 340, h: 430 }
-export const CPU: Box = { x: 520, y: 40, w: 700, h: 480 }
-export const CONTROL: Box = { x: 545, y: 70, w: 300, h: 120 }
-export const ALU: Box = { x: 875, y: 70, w: 320, h: 200 }
-export const REGISTERS: Box = { x: 545, y: 220, w: 300, h: 270 }
-export const IRU: Box = { x: 875, y: 300, w: 320, h: 190 }
+export const CPU: Box = { x: 520, y: 40, w: 700, h: 520 }
+// 标题与注解各占一行，所以控制器、运算器整体下移，给 CPU 的标题让出位置
+export const CONTROL: Box = { x: 545, y: 92, w: 300, h: 120 }
+export const ALU: Box = { x: 875, y: 92, w: 320, h: 230 }
+export const REGISTERS: Box = { x: 545, y: 240, w: 300, h: 310 }
+export const IRU: Box = { x: 875, y: 340, w: 320, h: 190 }
 export const STORAGE: Box = { x: 1300, y: 60, w: 330, h: 300 }
 // 输入输出紧贴在总线下方，把画面最底下那条带子整条让出来给数据流与阶段指示
-export const INPUT: Box = { x: 90, y: 600, w: 380, h: 92 }
-export const OUTPUT: Box = { x: 1250, y: 600, w: 380, h: 92 }
+// 输出设备要放得下读数，所以做得比输入设备宽；两块之间空出来的地方正好给总线标题
+export const INPUT: Box = { x: 90, y: 600, w: 380, h: 165 }
+export const OUTPUT: Box = { x: 1080, y: 600, w: 550, h: 165 }
 
 /** 贯穿下方的那条总线 */
 export const BUS_Y = 590
@@ -44,15 +48,15 @@ export const BUS_TAP = {
 export const REGISTER_SLOTS: Box[] = Array.from({ length: 10 }, (_, i) => {
   const col = i % 2
   const row = Math.floor(i / 2)
-  return { x: REGISTERS.x + 18 + col * 136, y: REGISTERS.y + 52 + row * 42, w: 128, h: 34 }
+  return { x: REGISTERS.x + 18 + col * 136, y: REGISTERS.y + 80 + row * 38, w: 128, h: 34 }
 })
 
 /** ALU 的三个功能块 */
 export const ALU_BLOCKS: Array<Box & { label: string }> = [
-  { x: ALU.x + 18, y: ALU.y + 52, w: 138, h: 56, label: '加 / 减' },
-  { x: ALU.x + 164, y: ALU.y + 52, w: 138, h: 56, label: '逻辑' },
-  { x: ALU.x + 18, y: ALU.y + 120, w: 138, h: 56, label: '乘 / 除' },
-  { x: ALU.x + 164, y: ALU.y + 120, w: 138, h: 56, label: '比较' },
+  { x: ALU.x + 18, y: ALU.y + 84, w: 138, h: 56, label: '加 / 减' },
+  { x: ALU.x + 164, y: ALU.y + 84, w: 138, h: 56, label: '逻辑' },
+  { x: ALU.x + 18, y: ALU.y + 150, w: 138, h: 56, label: '乘 / 除' },
+  { x: ALU.x + 164, y: ALU.y + 150, w: 138, h: 56, label: '比较' },
 ]
 
 export interface Route {

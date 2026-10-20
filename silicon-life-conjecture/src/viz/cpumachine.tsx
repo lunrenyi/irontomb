@@ -20,6 +20,7 @@ import {
   STORAGE,
   VIEW_H,
   VIEW_W,
+  VIEW_Y,
   alongRoute,
   type Box,
 } from './cpulayout'
@@ -58,7 +59,13 @@ export function returnRouteForPhase(phase: Phase, instr: { op: string } | null):
   return null
 }
 
-/** 一个部件的外框与标题 */
+/**
+ * 一个部件的外框与标题。
+ *
+ * 标题和注解各占一行：注解曾经和标题挤在同一条基线上、左右分列，
+ * 只要「标题 + 注解」比外框还宽就必然叠在一起（主存、寄存器组、总线接口都叠过）。
+ * 现在注解落到第二行，两行都不会越出外框。
+ */
 export function Panel({ box, title, note, highlight = false, children }: { box: Box; title: string; note?: string; highlight?: boolean; children?: React.ReactNode }) {
   return (
     <g>
@@ -73,11 +80,11 @@ export function Panel({ box, title, note, highlight = false, children }: { box: 
         strokeWidth={highlight ? 2.4 : 1.4}
       />
       {highlight ? <rect x={box.x - 4} y={box.y - 4} width={box.w + 8} height={box.h + 8} rx={18} fill='none' stroke={AMBER} strokeOpacity={0.3} strokeWidth={1.4} /> : null}
-      <text x={box.x + 16} y={box.y + 30} fill={highlight ? AMBER : INK} fontSize={26}>
+      <text x={box.x + 16} y={box.y + 34} fill={highlight ? AMBER : INK} fontSize={26}>
         {title}
       </text>
       {note ? (
-        <text x={box.x + box.w - 14} y={box.y + 30} fill={FAINT} fontSize={21} textAnchor='end'>
+        <text x={box.x + 16} y={box.y + 62} fill={FAINT} fontSize={21}>
           {note}
         </text>
       ) : null}
@@ -91,7 +98,8 @@ export function Bus({ on }: { on: boolean }) {
   return (
     <g>
       <line x1={BUS_X0} y1={BUS_Y} x2={BUS_X1} y2={BUS_Y} stroke={on ? AMBER : alpha(CIRCUIT, 0.45)} strokeWidth={4} strokeLinecap='round' />
-      <text x={BUS_X0} y={BUS_Y + 32} fill={on ? AMBER : FAINT} fontSize={23}>
+      {/* 标题落在输入设备与输出设备之间的空档里，原来贴着总线左端，压住了输入设备的标题 */}
+      <text x={(INPUT.x + INPUT.w + OUTPUT.x) / 2} y={BUS_Y + 30} fill={on ? AMBER : FAINT} fontSize={23} textAnchor='middle'>
         数据总线：一次只有一条通路在传数据
       </text>
       {[BUS_TAP.memory, BUS_TAP.cpu, BUS_TAP.storage].map((x) => (
@@ -129,7 +137,7 @@ export function OutputReadout({ machine }: { machine: Machine }) {
   return (
     <g>
       {kind === 'text' ? (
-        <text x={OUTPUT.x + 18} y={OUTPUT.y + 70} fill={SIGNAL} fontSize={42} fontFamily={MONO} letterSpacing='0.12em'>
+        <text x={OUTPUT.x + 18} y={OUTPUT.y + 116} fill={SIGNAL} fontSize={42} fontFamily={MONO} letterSpacing='0.12em'>
           {out.map((c) => (c >= 32 && c < 127 ? String.fromCharCode(c) : '·')).join('')}
         </text>
       ) : null}
@@ -139,14 +147,14 @@ export function OutputReadout({ machine }: { machine: Machine }) {
             const value = (last >> (7 - i)) & 1
             return (
               <g key={i}>
-                <rect x={OUTPUT.x + 18 + i * 44} y={OUTPUT.y + 38} width={36} height={36} rx={6} fill={value ? SIGNAL : alpha(CIRCUIT, 0.12)} stroke={value ? SIGNAL : alpha(CIRCUIT, 0.35)} strokeWidth={1.4} />
-                <text x={OUTPUT.x + 36 + i * 44} y={OUTPUT.y + 68} fill={value ? DEEP : MUTED} fontSize={26} fontFamily={MONO} textAnchor='middle'>
+                <rect x={OUTPUT.x + 18 + i * 44} y={OUTPUT.y + 86} width={36} height={36} rx={6} fill={value ? SIGNAL : alpha(CIRCUIT, 0.12)} stroke={value ? SIGNAL : alpha(CIRCUIT, 0.35)} strokeWidth={1.4} />
+                <text x={OUTPUT.x + 36 + i * 44} y={OUTPUT.y + 116} fill={value ? DEEP : MUTED} fontSize={26} fontFamily={MONO} textAnchor='middle'>
                   {value}
                 </text>
               </g>
             )
           })}
-          <text x={OUTPUT.x + 18} y={OUTPUT.y + 102} fill={MUTED} fontSize={22}>
+          <text x={OUTPUT.x + 18} y={OUTPUT.y + 150} fill={MUTED} fontSize={22}>
             {out.length > 0 ? '二值化结果（十进制 ' + last + '）' : '还没有输出'}
           </text>
         </g>
@@ -157,20 +165,20 @@ export function OutputReadout({ machine }: { machine: Machine }) {
             const picked = out.length > 0 && last === i
             return (
               <g key={label}>
-                <rect x={OUTPUT.x + 18 + i * 116} y={OUTPUT.y + 36} width={104} height={38} rx={8} fill={picked ? alpha(AMBER, 0.24) : alpha(CIRCUIT, 0.08)} stroke={picked ? AMBER : alpha(CIRCUIT, 0.3)} strokeWidth={1.4} />
-                <text x={OUTPUT.x + 70 + i * 116} y={OUTPUT.y + 65} fill={picked ? AMBER : MUTED} fontSize={24} textAnchor='middle'>
+                <rect x={OUTPUT.x + 18 + i * 116} y={OUTPUT.y + 84} width={104} height={38} rx={8} fill={picked ? alpha(AMBER, 0.24) : alpha(CIRCUIT, 0.08)} stroke={picked ? AMBER : alpha(CIRCUIT, 0.3)} strokeWidth={1.4} />
+                <text x={OUTPUT.x + 70 + i * 116} y={OUTPUT.y + 113} fill={picked ? AMBER : MUTED} fontSize={24} textAnchor='middle'>
                   {label}
                 </text>
               </g>
             )
           })}
-          <text x={OUTPUT.x + 18} y={OUTPUT.y + 102} fill={MUTED} fontSize={22}>
+          <text x={OUTPUT.x + 18} y={OUTPUT.y + 150} fill={MUTED} fontSize={22}>
             取分数最高的类别 —— 与 argmax 一致
           </text>
         </g>
       ) : null}
       {kind === 'number' || kind === undefined ? (
-        <text x={OUTPUT.x + 18} y={OUTPUT.y + 72} fill={SIGNAL} fontSize={48} fontFamily={MONO}>
+        <text x={OUTPUT.x + 18} y={OUTPUT.y + 118} fill={SIGNAL} fontSize={48} fontFamily={MONO}>
           {out.length > 0 ? String(last) : '—'}
         </text>
       ) : null}
@@ -193,7 +201,7 @@ export function CpuMachineFigure({ machine, progress }: CpuMachineFigureProps) {
   const windowRows = new Set(machine.program.windows.flatMap((w) => Array.from({ length: w.length }, (_, i) => w.start + i)))
 
   return (
-    <svg width='100%' height='100%' viewBox={'0 0 ' + VIEW_W + ' ' + VIEW_H} className='block' role='img' aria-label='计算机组成原理示意图：CPU、主存、存储设备与输入输出，数据在总线上流动'>
+    <svg width='100%' height='100%' viewBox={'0 ' + VIEW_Y + ' ' + VIEW_W + ' ' + VIEW_H} className='block' role='img' aria-label='计算机组成原理示意图：CPU、主存、存储设备与输入输出，数据在总线上流动'>
       <defs>
         <linearGradient id='cpu-shell' x1='0' y1='0' x2='0' y2='1'>
           <stop offset='0%' stopColor='#101c38' stopOpacity='0.92' />
@@ -205,7 +213,7 @@ export function CpuMachineFigure({ machine, progress }: CpuMachineFigureProps) {
 
       <Panel box={MEMORY} title='主存（内存）' note='指令与数据都住在这里' highlight={on('MemRead') || on('MemWrite')}>
         {Array.from({ length: MEMORY_ROWS }, (_, i) => {
-          const y = MEMORY.y + 46 + i * 26
+          const y = MEMORY.y + 88 + i * 26
           const isCode = i < machine.program.code.length
           const isMar = machine.mar === i && machine.control.MemRead === true
           const inWindow = windowRows.has(i)
@@ -275,7 +283,7 @@ export function CpuMachineFigure({ machine, progress }: CpuMachineFigureProps) {
           { label: 'MAR 地址', value: String(machine.mar), lit: on('MARin') },
           { label: 'MDR 数据', value: String(machine.mdr), lit: on('MDRin') },
         ].map((row, i) => {
-          const y = IRU.y + 52 + i * 36
+          const y = IRU.y + 88 + i * 36
           return (
             <g key={row.label}>
               <rect x={IRU.x + 16} y={y} width={IRU.w - 32} height={30} rx={5} fill={row.lit ? alpha(AMBER, 0.18) : alpha(DEEP, 0.8)} stroke={row.lit ? AMBER : alpha(CIRCUIT, 0.25)} strokeWidth={1.1} />

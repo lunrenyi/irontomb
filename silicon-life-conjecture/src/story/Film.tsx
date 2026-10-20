@@ -66,10 +66,18 @@ export function Film({
 function Shot({ win, frame }: { win: (typeof SCENE_WINDOWS)[number]; frame: number }) {
   if (frame < win.renderFrom || frame > win.renderTo) return null
   const isLast = win === SCENE_WINDOWS[SCENE_WINDOWS.length - 1]
-  // 淡入走完 [start - OVERLAP, start]，淡出走 [end - OVERLAP, end]：
- // 两段正好首尾相接于同一批重叠帧，所以是溶解而不是叠加。
-  const fadeIn = easeOut(range(frame, win.renderFrom, win.start))
-  const fadeOut = isLast ? 1 : 1 - easeIn(range(frame, win.end - SCENE_OVERLAP, win.end))
+  /*
+   * 转场做成「沉到黑里再浮起来」，不是两幕互相溶解。
+   *
+   * 原来淡入走 [start - OVERLAP, start]、淡出走 [end - OVERLAP, end]，
+   * 而下一幕的 start 恰好等于 end - OVERLAP —— 于是新幕全亮之后旧幕才开始淡出，
+   * 两幕的文字整整叠了十几帧（第三幕的「生物神经元」压在第四幕标题上）。
+   *
+   * 现在旧幕先淡到 0，新幕才从 0 浮起：交界处有一帧全黑，两幕文字永不同框。
+   */
+  const half = SCENE_OVERLAP / 2
+  const fadeIn = easeOut(range(frame, win.start + half, win.start + SCENE_OVERLAP))
+  const fadeOut = isLast ? 1 : 1 - easeIn(range(frame, win.end - SCENE_OVERLAP, win.end - half))
   const opacity = fadeIn * fadeOut
   if (opacity <= 0.002) return null
   const Renderer = RENDERERS[win.scene.id]

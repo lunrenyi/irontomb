@@ -2,7 +2,18 @@ import { describe, expect, it } from 'vitest'
 import { SCENES, TOTAL_FRAMES, TOTAL_SECONDS, sceneAt } from './timeline'
 import { CUE_GAP, auditScene, beatTable, keyFrames, keySize, textFits } from './cues'
 import { SCORE } from './score'
-import { CAPTION, STAGE, TYPE, captionBandHeight, readingFrames, wrapLines } from './layout'
+import {
+  CAPTION,
+  COMPUTER_KEY_BOTTOM,
+  COMPUTER_KEY_Y,
+  COMPUTER_PHASE,
+  COMPUTER_STAGE,
+  STAGE,
+  TYPE,
+  captionBandHeight,
+  readingFrames,
+  wrapLines,
+} from './layout'
 
 describe('时间轴', () => {
   it('六幕都在，而且顺序不变', () => {
@@ -125,5 +136,37 @@ describe('字幕：每一条都读得完、也放得下', () => {
   it('主视觉区与底部字幕区不重叠', () => {
     // 字幕带最多占画面下方三分之一，主视觉仍然有地方放
     expect(captionBandHeight(2)).toBeLessThan(STAGE.h * 0.32)
+  })
+
+  it('第四幕：关键文字、阶段条、主视觉三块互不重叠', () => {
+    // 这一幕几乎每拍都是「关键文字 + 主视觉」，版面必须先划出三条互不相交的带子。
+    // 以前关键文字默认落在 y=170，正好压在阶段条和机器上缘上，逢有字的一拍就撞车。
+    expect(COMPUTER_KEY_BOTTOM).toBeLessThan(COMPUTER_PHASE.top)
+    expect(COMPUTER_PHASE.labelY).toBeLessThan(COMPUTER_STAGE.top)
+    // 主视觉底边不能压进这一幕自己的字幕带（按这一幕最长的那条字幕算）
+    const tallest = SCORE.computer.reduce(
+      (max, spec) =>
+        (spec.cues ?? []).reduce(
+          (m, c) => Math.max(m, wrapLines(c.text, c.note ? CAPTION.noteSize : CAPTION.size).length),
+          max
+        ),
+      1
+    )
+    expect(COMPUTER_STAGE.top + COMPUTER_STAGE.height).toBeLessThanOrEqual(
+      STAGE.y + STAGE.h - captionBandHeight(tallest)
+    )
+    // 每一拍带字的都必须落在关键文字带里；只有最后一拍的收束问句例外 ——
+    // 那一拍画面上没有任何图形，用默认的居中位置才对
+    const last = SCORE.computer.length - 1
+    SCORE.computer.forEach((spec, i) => {
+      const key = spec.key
+      if (!key) return
+      if (i === last) {
+        expect(key.tone, key.text).toBe('question')
+        expect(key.y).toBeUndefined()
+        return
+      }
+      expect(key.y, key.text).toBe(COMPUTER_KEY_Y)
+    })
   })
 })
