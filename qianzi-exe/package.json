@@ -1,0 +1,35 @@
+{
+  "name": "qianzi-exe",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "千字文：世界的源代码 —— 把《千字文》解码成一张可交互的古代世界模型",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b --pretty",
+    "test": "vitest run",
+    "film:preview": "remotion studio remotion/index.ts",
+    "film:still": "remotion still remotion/index.ts QianziExe out/still.png --frame=1200",
+    "export:mp4": "remotion render remotion/index.ts QianziExe out/qianzi-exe.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --log=info",
+    "export:mp4:preview": "remotion render remotion/index.ts QianziExe out/qianzi-exe-preview.mp4 --scale=0.5 --codec=h264 --crf=26 --pixel-format=yuv420p --log=info"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.536",
+    "@remotion/studio": "^4.0.536",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.536"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.5",
+    "vitest": "^2.1.8"
+  }
+}

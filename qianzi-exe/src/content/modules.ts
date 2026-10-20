@@ -1,0 +1,98 @@
+/**
+ * 六个模块的定义。
+ *
+ * 一条原则：**模块只决定「这一句在网站里被讲成什么」，不决定「这一句在原书里的意思」**。
+ * 每句的释义、视角分类都在 qianzi.ts 里逐句写死，改模块不会改动任何一句原文的含义。
+ */
+
+export type ModuleId = 'cosmos' | 'nature' | 'civilization' | 'human' | 'daily'
+
+export interface ModuleDef {
+  id: ModuleId
+  /** 章节编号，01 - 05（THE WHOLE MODEL 是 06，不是一组新的句子） */
+  index: string
+  /** 英文名，出现在界面与影片角标上 */
+  name: string
+  /** 中文名 */
+  nameZh: string
+  /** 一句话：这个模块在看什么 */
+  question: string
+  /** 这个模块的视觉世界坐标（在同一个世界里连续排布） */
+  region: { x: number; y: number; w: number; h: number }
+  /** 模块主色 */
+  hue: string
+  /** 科学说明 / 读法限定 */
+  caveat: string
+}
+
+export const MODULES: ModuleDef[] = [
+  {
+    id: 'cosmos',
+    index: '01',
+    name: 'COSMOS',
+    nameZh: '天地时序',
+    question: '古人怎么描述头顶这片天：昼夜、季节、历法与星辰。',
+    region: { x: -3400, y: -1500, w: 2600, h: 2000 },
+    hue: '#5fe3d0',
+    caveat:
+      '「玄黄」「洪荒」是命名与象征，不是对宇宙物理状态的判断；「辰宿列张」说的是中国古代的星官分区，与现代星座并不重合。凡是本模块给出的现代科学说明，都是**今人对同一现象的解释**，不是古人已经证明的结论。',
+  },
+  {
+    id: 'nature',
+    index: '02',
+    name: 'NATURE',
+    nameZh: '山川草木',
+    question: '云雨、霜露、江河、土壤、树木与飞禽走兽：可触摸的那一半世界。',
+    region: { x: -600, y: -1900, w: 3000, h: 2200 },
+    hue: '#7dffb0',
+    caveat:
+      '这一组句子多数是古人的**经验观察与分类**：海咸河淡、鳞潜羽翔、陈根委翳，都准确。本模块的图形是按这些描述程序化生成的示意图，不是对具体地点的实测复原。',
+  },
+  {
+    id: 'civilization',
+    index: '03',
+    name: 'CIVILIZATION',
+    nameZh: '文字与制度',
+    question: '文字、都邑、宫室、典籍、律令与史事：人被组织起来的样子。',
+    region: { x: 1400, y: -1900, w: 2800, h: 2200 },
+    hue: '#a78bfa',
+    caveat:
+      '《千字文》的历史段落把**传说**（龙师火帝、鸟官人皇）与**信史**（周发殷汤、百郡秦并）连在一起写。本模块在时间轴上把两者分色标注：传说人物以虚线与浅色表示，正史人物以实线与深色表示，不把二者混为一谈。',
+  },
+  {
+    id: 'human',
+    index: '04',
+    name: 'HUMAN SYSTEMS',
+    nameZh: '修身与人事',
+    question: '身体、孝悌、交友、言语、心性与出处：一个人如何被塑造。',
+    region: { x: 1400, y: 700, w: 3000, h: 2400 },
+    hue: '#ffc46b',
+    caveat:
+      '这一模块是**伦理观念**，不是行为科学。「墨悲丝染」是类比与劝诫，不是心理学实验；「女慕贞洁，男效才良」写的是当时的伦理期待，其中包含的性别秩序属于历史事实，今天不必当成规范。',
+  },
+  {
+    id: 'daily',
+    index: '05',
+    name: 'DAILY LIFE',
+    nameZh: '衣食器用',
+    question: '耕种、饮食、纺织、器物、宴乐与起居：世界如何被造出来并过下去。',
+    region: { x: -3400, y: 900, w: 2800, h: 2200 },
+    hue: '#ff9d6b',
+    caveat:
+      '「治本于农」是古代经济思想，「税熟贡新」是当时的赋税形态；本页呈现的是**制度与器物的样子**，不代表对任何一种经济形态的评价。',
+  },
+]
+
+export const moduleById = (id: ModuleId): ModuleDef => MODULES.find((m) => m.id === id)!
+
+/** THE WHOLE MODEL：不是新的一组句子，而是把前面五组重新接起来 */
+export const WHOLE = {
+  index: '06',
+  name: 'THE WHOLE MODEL',
+  nameZh: '完整的知识全景',
+  question: '一千个字本来就是一个整体：把它拆开是为了看清结构，装回去才是它本来的样子。',
+  region: { x: 0, y: 0, w: 12000, h: 6000 },
+  hue: '#ffffff',
+  caveat:
+    '「世界模型」是本站的说法，指**一张把《千字文》的语句与它们之间的语义关系画出来的图**。它不是古人的原图，古人没有留下这样一张图；它也不是对《千字文》的唯一解释。',
+}

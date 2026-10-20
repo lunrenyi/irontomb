@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-void: #03060e;
+  --color-deep: #060b18;
+  --color-navy: #0b1730;
+  --color-paper: #eef4ff;
+  --color-muted: #8ea3c8;
+  --color-faint: #56658a;
+  --color-cyan: #5fe3d0;
+  --color-green: #8dff9e;
+  --color-violet: #a78bfa;
+  --color-amber: #ffc46b;
+  --color-coral: #ff9d6b;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-display: 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', 'Noto Sans CJK SC', sans-serif;
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Menlo, monospace;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-paper);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: rgba(95, 227, 208, 0.28);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cyan);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+}
+
+/* ---------- 坐标网格：科学可视化的底纹 ---------- */
+.qz-grid {
+  background-image:
+    linear-gradient(to right, rgba(95, 227, 208, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(95, 227, 208, 0.05) 1px, transparent 1px);
+  background-size: 80px 80px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 40%, #000 30%, transparent 78%);
+  mask-image: radial-gradient(ellipse 78% 62% at 50% 40%, #000 30%, transparent 78%);
+}
+
+/* ---------- 滚动条 ---------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(142, 163, 200, 0.18);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(95, 227, 208, 0.35);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
