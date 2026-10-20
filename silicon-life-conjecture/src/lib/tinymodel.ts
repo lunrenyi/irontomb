@@ -66,9 +66,15 @@ export function forward(weights: ModelWeights, tokenIndex: number): Forward {
   return { hidden, logits, probs: exps.map((e) => e / total) }
 }
 
-/** 全批量梯度下降：损失用交叉熵。固定种子，所以训练结果永远一样。 */
-export function train(seed: number, steps: number, learningRate = 0.35): ModelWeights {
+/**
+ * 全批量梯度下降：损失用交叉熵。固定种子，所以训练结果永远一样。
+ *
+ * 顺带把每一步之后的损失记下来 —— 第五幕那条下降曲线就是这里算出来的，
+ * 不是什么预制的示意图。
+ */
+function trainWithLoss(seed: number, steps: number, learningRate = 0.35): { weights: ModelWeights; losses: number[] } {
   const w = initWeights(seed)
+  const losses: number[] = []
   const grads: ModelWeights = {
     W1: w.W1.map((row) => row.map(() => 0)),
     b1: w.b1.map(() => 0),
@@ -107,8 +113,9 @@ export function train(seed: number, steps: number, learningRate = 0.35): ModelWe
       w.b2[k] -= (learningRate * grads.b2[k]) / n
       for (let j = 0; j < HIDDEN; j += 1) w.W2[k][j] -= (learningRate * grads.W2[k][j]) / n
     }
+    losses.push(lossOf(w))
   }
-  return w
+  return { weights: w, losses }
 }
 
 export const lossOf = (w: ModelWeights): number => {
@@ -121,7 +128,13 @@ export const lossOf = (w: ModelWeights): number => {
 }
 
 /** 全站共用这一份权重：训练发生在模块加载时，固定种子，只跑几百步 */
-export const MODEL = train(20260118, 600)
+const TRAINED = trainWithLoss(20260118, 600)
+export const MODEL = TRAINED.weights
+/** 每一步的真实损失 —— 第五幕训练场景里的曲线就是它 */
+export const LOSS_CURVE = TRAINED.losses
+
+export const train = (seed: number, steps: number, learningRate = 0.35): ModelWeights =>
+  trainWithLoss(seed, steps, learningRate).weights
 
 export const argmaxIndex = (values: readonly number[]): number => values.reduce((best, v, i) => (v > values[best] ? i : best), 0)
 

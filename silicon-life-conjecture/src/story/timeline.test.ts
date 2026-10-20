@@ -8,6 +8,9 @@ import {
   COMPUTER_KEY_Y,
   COMPUTER_PHASE,
   COMPUTER_STAGE,
+  LLM_KEY_BOTTOM,
+  LLM_KEY_Y,
+  LLM_STAGE,
   STAGE,
   TYPE,
   captionBandHeight,
@@ -26,9 +29,11 @@ describe('时间轴', () => {
     }
   })
 
-  it('全片在四分四十五秒到五分十五秒之间', () => {
+  it('全片在四分四十五秒到五分三十秒之间', () => {
+    // 上限从 315 秒放宽到 330 秒：第五幕现在要讲分词、向量、注意力、逐 Token 生成、
+    // 训练与推理这五件事，单幕从 48 秒涨到 63 秒。其余五幕一字未动。
     expect(TOTAL_SECONDS).toBeGreaterThan(285)
-    expect(TOTAL_SECONDS).toBeLessThan(315)
+    expect(TOTAL_SECONDS).toBeLessThan(330)
     expect(TOTAL_FRAMES).toBe(Math.round(TOTAL_FRAMES))
   })
 
@@ -167,6 +172,34 @@ describe('字幕：每一条都读得完、也放得下', () => {
         return
       }
       expect(key.y, key.text).toBe(COMPUTER_KEY_Y)
+    })
+  })
+
+  it('第五幕：字幕一律一行，主视觉不会被字幕带压住', () => {
+    // 这一幕的主视觉区高度是按「字幕最多一行」倒推的（LLM_STAGE.bottom = 896）。
+    // 只要某一拍不小心写成两行字幕，主视觉就会伸进字幕带里 —— 这里把它钉住。
+    for (const spec of SCORE.mind) {
+      for (const cue of spec.cues ?? []) {
+        const size = cue.note ? CAPTION.noteSize : CAPTION.size
+        expect(wrapLines(cue.text, size).length, cue.text).toBe(1)
+      }
+    }
+    expect(LLM_STAGE.top + LLM_STAGE.height).toBeLessThanOrEqual(
+      STAGE.y + STAGE.h - captionBandHeight(1)
+    )
+  })
+
+  it('第五幕：关键文字都落在同一条带子上，收束问句除外', () => {
+    expect(LLM_KEY_BOTTOM).toBeLessThan(LLM_STAGE.top)
+    const last = SCORE.mind.length - 1
+    SCORE.mind.forEach((spec, i) => {
+      const key = spec.key
+      if (!key) return
+      if (i === last) {
+        expect(key.tone, key.text).toBe('question')
+        return
+      }
+      expect(key.y, key.text).toBe(LLM_KEY_Y)
     })
   })
 })

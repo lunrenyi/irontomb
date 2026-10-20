@@ -38,7 +38,7 @@ const ORDER: SceneMeta[] = [
   { id: 'life', title: '生命游戏', chapter: '第二幕' },
   { id: 'neural', title: '神经与芯片', chapter: '第三幕' },
   { id: 'computer', title: '指令执行', chapter: '第四幕' },
-  { id: 'mind', title: '灵魂与 AI', chapter: '第五幕' },
+  { id: 'mind', title: '大模型与意识', chapter: '第五幕' },
   { id: 'silicon', title: '硅基生命', chapter: '第六幕' },
 ]
 

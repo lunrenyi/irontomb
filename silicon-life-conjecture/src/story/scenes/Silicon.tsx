@@ -55,7 +55,16 @@ export function SiliconScene({ frame }: { frame: number }) {
 
 /** 第 0-1 拍：先把两个「硅」分开摆 —— 这一版字号给到 54 / 34 */
 function TwoSiliconsPanel({ frame }: { frame: number }) {
-  const inT = easeOut(frac(frame, B, 0, 0, 0.25))
+  /**
+   * 这两块要等章节标题基本退场之后再进场。
+   *
+   * 原来是 beat 0 的头 25% 就淡入，正好和满不透明的「硅基生命的猜想」撞在一起 ——
+   * 幕间压黑转场那十几帧里，两幕文字叠在一起。
+   *
+   * 标题要到 beat 0 的 0.88 才完全淡出（本地帧 82），所以入画从下一拍才开始 ——
+   * 两样东西之间留出一段谁也不在的干净空档，而不是让它们叠在一起。
+   */
+  const inT = easeOut(frac(frame, B, 1, 0, 0.2))
   const dim = 1 - easeOut(frac(frame, B, 1, 0.3, 1)) * 0.55
   return (
     <svg width={STAGE_W} height={STAGE_H} className='block' style={STAGE_SVG} opacity={inT * dim}>

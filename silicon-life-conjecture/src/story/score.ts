@@ -11,7 +11,7 @@
  * 一条字幕尽量只说一件事，读完不超时再换画面。
  */
 import type { BeatSpec } from './cues'
-import { COMPUTER_KEY_Y } from './layout'
+import { COMPUTER_KEY_Y, LLM_KEY_Y } from './layout'
 
 export const SCORE: Record<string, BeatSpec[]> = {
   /* ---------------------------------------------------- 第一幕：0 和 1 */
@@ -54,7 +54,12 @@ export const SCORE: Record<string, BeatSpec[]> = {
 
   /* -------------------------------------------- 第二幕：康威生命游戏 */
   life: [
-    { min: 4.8, chapter: true, key: { text: 'B3 / S23', tone: 'formula', y: 170 } },
+    /**
+     * B3 / S23 和章节标题同拍出现，所以必须排在标题块上方。
+     * 标题块从 y=214 起（标题 214-306、副标题约 328-366、分隔线约 396），
+     * 关键文字 62 号字高 84，原来放在 y=170 时底边 254，正好压进标题。
+     */
+    { min: 4.8, chapter: true, key: { text: 'B3 / S23', tone: 'formula', y: 110 } },
     { min: 3.8, cues: [{ text: '只有四条规则：数一数周围八格里有几个活的。' }] },
     { min: 4.3, cues: [{ text: '然后决定这一格，下一代到底活不活。' }] },
     { min: 4.8, cues: [{ text: '每 4 代，它整体挪一格 —— 这就是「移动」。' }] },
@@ -128,28 +133,17 @@ export const SCORE: Record<string, BeatSpec[]> = {
 
   /* ----------------------------------------------------- 第五幕：灵魂与 AI */
   mind: [
-    { min: 3.9, chapter: true },
-    { min: 5.0, key: { text: '输入', tone: 'term' }, cues: [{ text: '输入先变成一个向量。' }] },
-    { min: 5.0, key: { text: '加权', tone: 'term' }, cues: [{ text: '再一层层加权。' }] },
-    { min: 5.0, key: { text: '概率', tone: 'term' }, cues: [{ text: '算出下一个词的概率。' }] },
-    { min: 5.0, key: { text: '取样', tone: 'term' }, cues: [{ text: '然后按概率取一个出来。' }] },
-    {
-      min: 6.1,
-      key: { text: '主观体验', tone: 'term' },
-      cues: [
-        { text: '真正难的地方在于：一个系统能记录自己的状态。' },
-        { text: '能据此调整行为，这到底说明了什么？' },
-      ],
-    },
-    {
-      min: 6.1,
-      cues: [
-        { text: '一条证据支持「智能」到什么程度，' },
-        { text: '与支持「有体验」到什么程度，是两个不同的问题。' },
-      ],
-    },
-    { min: 6.1, cues: [{ text: '智能、自我表征、意识与灵魂，是四件不同的事。' }] },
-    { min: 5.5, key: { text: '有智能，就有生命吗？', tone: 'question', y: 846 } },
+    { min: 3.6, chapter: true },
+    { min: 6.0, cues: [{ text: '每一句回答，都经历了一系列计算。' }] },
+    { min: 4.8, key: { text: '文字 → Token', tone: 'term', y: LLM_KEY_Y }, cues: [{ text: '真实模型的分词方式不一定这样。' }] },
+    { min: 5.0, key: { text: 'Token → 向量', tone: 'term', y: LLM_KEY_Y }, cues: [{ text: '从此模型只认得数字。' }] },
+    { min: 7.0, key: { text: '注意力机制', tone: 'term', y: LLM_KEY_Y }, cues: [{ text: '同一个词，落在不同上下文里就看不同的词。' }] },
+    { min: 5.0, key: { text: '多层计算', tone: 'term', y: LLM_KEY_Y }, cues: [{ text: '同样的结构，重复几十到上百次。' }] },
+    { min: 5.2, key: { text: '预测下一个 Token', tone: 'term', y: LLM_KEY_Y }, cues: [{ text: '这些概率是教学用的示意数据。', note: true }] },
+    { min: 9.2, key: { text: '一个一个长出来', tone: 'term', y: LLM_KEY_Y }, cues: [{ text: '解码策略不同，选出来的词就可能不同。' }] },
+    { min: 6.8, key: { text: '训练 ≠ 推理', tone: 'term', y: LLM_KEY_Y }, cues: [{ text: '预训练之后还有指令微调等后训练。' }] },
+    { min: 5.2, cues: [{ text: '流畅的语言，不等于主观体验。' }] },
+    { min: 5.2, key: { text: '有智能，就有生命吗？', tone: 'question', y: 790 } },
   ],
 
   /* ------------------------------------------------- 第六幕：硅基生命的猜想 */
