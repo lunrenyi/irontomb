@@ -66,7 +66,7 @@ export function DailyScene({ frame, beat }: SceneProps) {
             ))}
             <Tag x={1550} y={GROUND - 130} text="税熟贡新" color={GREEN} size={24} anchor="middle" />
           </g>
-          <Readout x={150} y={900} label="POLICY" value="农本" color={GREEN} size={26} />
+            <Readout x={150} y={900} label="农本" value="以农为本" color={GREEN} size={26} />
         </g>
       ) : null}
 
@@ -218,7 +218,7 @@ export function DailyScene({ frame, beat }: SceneProps) {
             ))}
             <Tag x={1590} y={740} text="亲戚故旧" color={VIOLET} size={24} anchor="middle" />
           </g>
-          <Readout x={150} y={880} label="ECONOMY" value="农 · 食 · 器" color={AMBER} size={26} />
+          <Readout x={150} y={880} label="农食器" value="衣 · 食 · 器" color={AMBER} size={26} />
         </g>
       ) : null}
     </g>

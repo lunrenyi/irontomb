@@ -70,8 +70,8 @@ export function CivilizationScene({ frame, beat }: SceneProps) {
           })}
           <Tag x={150} y={200 + 560} text="杜稿钟隶，漆书壁经" color={PAPER} size={34} />
           <Tag x={150} y={200 + 604} text="杜度草书 · 钟繇隶书 · 漆写的书 · 墙上的经文" color={VIOLET} size={22} opacity={0.75} />
-          <Readout x={1180} y={620} label="EARLIEST MATURE SCRIPT" value="商代甲骨文" color={AMBER} size={26} />
-          <Readout x={1180} y={760} label="NOT A RECORD" value="始制文字 = 传说" color={AMBER} size={24} />
+          <Readout x={1180} y={620} label="最早的成熟文字" value="商代甲骨文" color={AMBER} size={26} />
+          <Readout x={1180} y={760} label="并非史实记载" value="始制文字 = 传说" color={AMBER} size={24} />
         </g>
       ) : null}
 
@@ -168,8 +168,8 @@ export function CivilizationScene({ frame, beat }: SceneProps) {
           <Tag x={150} y={722} text="桓公匡合，济弱扶倾" color={CYAN} size={22} opacity={0.85} />
           <Tag x={150} y={762} text="假途灭虢，践土会盟" color={CYAN} size={22} opacity={0.85} />
           <Tag x={150} y={802} text="九州禹迹，百郡秦并" color={CYAN} size={22} opacity={0.85} />
-          <Readout x={1300} y={700} label="QIN UNIFICATION" value="前 221" color={AMBER} size={28} unit="年" />
-          <Readout x={1300} y={830} label="COMMANDERIES" value="36" color={AMBER} size={28} unit="郡" />
+          <Readout x={1300} y={700} label="秦统一" value="前 221" color={AMBER} size={28} unit="年" />
+          <Readout x={1300} y={830} label="郡数" value="36" color={AMBER} size={28} unit="郡" />
         </g>
       ) : null}
 
@@ -222,7 +222,7 @@ export function CivilizationScene({ frame, beat }: SceneProps) {
             <Tag x={1600} y={438} text="烝尝" color={GREEN} size={34} anchor="middle" />
             <Tag x={1600} y={556} text="冬祭曰烝 · 秋祭曰尝" color={GREEN} size={18} anchor="middle" opacity={0.8} />
           </g>
-          <Readout x={130} y={760} label="RITUAL" value="祭祀烝尝" color={GREEN} size={26} />
+          <Readout x={130} y={760} label="四时祭礼" value="祭祀烝尝" color={GREEN} size={26} />
         </g>
       ) : null}
     </g>

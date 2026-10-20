@@ -7,7 +7,7 @@
  *   seasons  二十四节气盘 + 置闰（回归年 365.2422 日 / 朔望月 29.5306 日）
  *   pipes    十二律管
  */
-import { CYAN, AMBER, GREEN, PAPER, VIOLET } from '../../viz/palette'
+import { CYAN, AMBER, GREEN, MONO_HAN, PAPER, VIOLET } from '../../viz/palette'
 import { Grid, Leader, Line, Poly, Readout, Ring, Tag } from '../../viz/parts'
 import { range } from '../../lib/easing'
 import { mulberry32 } from '../../lib/rng'
@@ -118,7 +118,7 @@ export function CosmosScene({ frame, beat, progress }: SceneProps) {
           transform={'rotate(-24 ' + CX + ' ' + CY + ')'}
         />
         <Line x1={CX - 430} y1={CY} x2={CX + 430} y2={CY} color={CYAN} width={0.6} opacity={0.2} />
-        <Tag x={CX + 400} y={CY - 8} text="CELESTIAL SPHERE" color={CYAN} size={16} opacity={0.5} anchor="end" />
+        <Tag x={CX + 430} y={CY - 62} text="天球" color={CYAN} size={20} opacity={0.5} anchor="end" />
       </g>
 
       {/* 二十八宿 */}
@@ -216,9 +216,9 @@ export function CosmosScene({ frame, beat, progress }: SceneProps) {
               </g>
             )
           })}
-          <Tag x={CX + 262} y={CY - 14} text="SUN · 日" color={AMBER} size={20} />
-          <Tag x={CX + 198} y={CY - 14} text="MOON · 月" color={CYAN} size={20} anchor="end" />
-          <Readout x={170} y={820} label="PHASE" value="盈 → 昃 → 亏" color={CYAN} size={26} />
+          <Tag x={CX + 262} y={CY - 14} text="太阳 · 日" color={AMBER} size={20} />
+          <Tag x={CX + 198} y={CY - 14} text="月亮 · 月" color={CYAN} size={20} anchor="end" />
+          <Readout x={170} y={820} label="月相" value="盈 → 昃 → 亏" color={CYAN} size={26} />
         </g>
       ) : null}
 
@@ -304,7 +304,7 @@ export function CosmosScene({ frame, beat, progress }: SceneProps) {
                   fontSize={15}
                   fill={PAPER}
                   opacity={0.55}
-                  fontFamily="'SFMono-Regular',monospace"
+                  fontFamily={MONO_HAN}
                 >
                   {['一', '二', '三', '四', '五', '六', '七', '八', '九', '十', '十一', '十二'][i]}月
                 </text>

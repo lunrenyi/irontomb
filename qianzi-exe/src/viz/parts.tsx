@@ -3,7 +3,7 @@
  *
  * 全部是纯函数 —— 只吃数字，不读时钟、不用随机数。
  */
-import { alpha, CYAN, PAPER } from './palette'
+import { alpha, CYAN, HAN, MONO_HAN, PAPER } from './palette'
 
 export function Ring({
   cx,
@@ -159,7 +159,7 @@ export function Tag({
       fill={color}
       opacity={opacity}
       textAnchor={anchor}
-      fontFamily={mono ? "'SFMono-Regular','JetBrains Mono',Menlo,monospace" : "'PingFang SC',sans-serif"}
+      fontFamily={mono ? MONO_HAN : HAN}
       style={{ letterSpacing: mono ? '0.16em' : '0.06em' }}
     >
       {text}
@@ -187,13 +187,17 @@ export function Readout({
 }) {
   return (
     <g>
-      <Tag x={x} y={y} text={label} color={color} size={size * 0.4} opacity={0.65} />
+      {/*
+        标签现在是中文：0.4 倍字号在 1920 宽的成片里只有 10px 出头，
+        汉字笔画糊成一团。提到 0.5 倍（13px 上下）才读得出来。
+      */}
+      <Tag x={x} y={y} text={label} color={color} size={size * 0.5} opacity={0.65} />
       <text
         x={x}
         y={y + size * 1.1}
         fontSize={size}
         fill={PAPER}
-        fontFamily="'SFMono-Regular','JetBrains Mono',Menlo,monospace"
+        fontFamily={MONO_HAN}
         style={{ letterSpacing: '0.04em' }}
       >
         {value}

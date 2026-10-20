@@ -2,7 +2,7 @@
  * 首页开场：像启动一个保存古代知识的数字档案。
  *
  * 时间线（秒）：
- *   0.0 - 2.6   终端：ARCHIVE FOUND / PARSING CHARACTERS / BUILDING WORLD MODEL
+ *   0.0 - 2.6   终端：档案已找到 / 正在解析字符 / 正在构建世界模型
  *   1.2 - 5.6   一千个大号汉字被扫描、逐个点亮
  *   4.6 - 8.6   镜头拉远，字缩成节点，知识网络长出来
  *   7.4 - 9.6   标题与「启动解码」
@@ -23,9 +23,9 @@ import { Tag } from '../viz/parts'
 const VIEWPORT = { width: 1920, height: 1080 }
 
 const TERMINAL = [
-  { text: 'ARCHIVE FOUND', at: 0.25 },
-  { text: 'PARSING CHARACTERS', at: 0.95 },
-  { text: 'BUILDING WORLD MODEL', at: 1.65 },
+  { text: '档案已找到', at: 0.25 },
+  { text: '正在解析字符', at: 0.95 },
+  { text: '正在构建世界模型', at: 1.65 },
 ]
 
 /** 字阵在解码区里的中心（world.ts 里 GRID_POSITIONS 用的同一套） */
@@ -215,7 +215,7 @@ export function ArchiveBoot({ onStart }: { onStart: () => void }) {
         })}
         {t > 1.6 ? (
           <div className='mt-3 font-mono text-[11px] tracking-[0.2em] text-faint sm:text-[12px]'>
-            {TOTAL_PHRASES} PHRASES · {TOTAL_CHARS} CHARACTERS · {parsed}/1000 PARSED
+            {TOTAL_PHRASES} 句 · {TOTAL_CHARS} 字 · 已解析 {parsed}/{TOTAL_CHARS}
           </div>
         ) : null}
         {t > 1.2 ? (
@@ -241,7 +241,7 @@ export function ArchiveBoot({ onStart }: { onStart: () => void }) {
           千字文：世界的源代码
         </div>
         <div className='relative mt-3 font-mono text-[11px] tracking-[0.3em] text-cyan sm:text-[14px]'>
-          QIANZI.EXE — DECODE AN ANCIENT WORLD MODEL
+          千字文程序 · 解码一个古代世界模型
         </div>
         <button
           type='button'
@@ -258,7 +258,7 @@ export function ArchiveBoot({ onStart }: { onStart: () => void }) {
         className='pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center pb-6 font-mono text-[10px] tracking-[0.24em] text-faint'
         style={{ opacity: clamp01(titleAlpha * 1.4) * (1 - titleOut) }}
       >
-        1000 CHARACTERS · 250 PHRASES · 5 MODULES · ONE MODEL
+        {TOTAL_CHARS} 字 · {TOTAL_PHRASES} 句 · {MODULES.length} 个模块 · 一张地图
       </div>
     </div>
   )

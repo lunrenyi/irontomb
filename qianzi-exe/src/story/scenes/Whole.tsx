@@ -74,7 +74,7 @@ export function WholeScene({ frame, beat }: SceneProps) {
             </text>
           )
         })}
-        <Tag x={REGIONS.decode.x + 40} y={REGIONS.decode.y + 70} text="1000 CHARACTERS" color={CYAN} size={30} opacity={0.8} />
+        <Tag x={REGIONS.decode.x + 40} y={REGIONS.decode.y + 70} text="一千字" color={CYAN} size={30} opacity={0.8} />
       </g>
 
       {/* 簇之间的长线：模块之间共享的语义标签 */}

@@ -23,7 +23,7 @@ export interface KeyText {
 /** 一条字幕 */
 export interface CueSpec {
   text: string
-  /** 补充说明：小一号、灰一些，通常用来放科学限定 */
+  /** 补充说明：通常用来放科学限定。字号、字重与正文完全一致，只靠左侧竖线区分 */
   note?: boolean
 }
 
@@ -49,6 +49,7 @@ export interface CueWindow {
   text: string
   from: number
   to: number
+  /** 字幕字号。取自唯一的排版规范 CAPTION.size，所有字幕（含注记）都一样 */
   size: number
   note: boolean
 }
@@ -105,7 +106,7 @@ export function textFits(key: KeyText): boolean {
 /** 一拍里字幕要占的总帧数（含间隔） */
 function cueFrames(cues: readonly CueSpec[]): number {
   if (cues.length === 0) return 0
-  const total = cues.reduce((sum, c) => sum + readingFrames(c.text, c.note ? CAPTION.noteSize : CAPTION.size), 0)
+  const total = cues.reduce((sum, c) => sum + readingFrames(c.text, CAPTION.size), 0)
   return total + CUE_GAP * (cues.length - 1)
 }
 
@@ -121,7 +122,7 @@ export function beatTable(specs: readonly BeatSpec[]): BeatTable {
     const windows: CueWindow[] = []
     let t = cursor
     for (const c of spec.cues ?? []) {
-      const size = c.note ? CAPTION.noteSize : CAPTION.size
+      const size = CAPTION.size
       const frames = readingFrames(c.text, size)
       windows.push({ text: c.text, from: t, to: t + frames, size, note: Boolean(c.note) })
       t += frames + CUE_GAP
@@ -186,8 +187,7 @@ export function auditScene(specs: readonly BeatSpec[]): string[] {
   specs.forEach((spec, i) => {
     const beat = table[i]
     ;(spec.cues ?? []).forEach((cue, j) => {
-      const size = cue.note ? CAPTION.noteSize : CAPTION.size
-      const lines = wrapLines(cue.text, size)
+      const lines = wrapLines(cue.text, CAPTION.size)
       if (lines.some((l) => l.length === 0)) problems.push(`b${i} cue${j}: 有空行`)
       if (cue.text.length > 90) problems.push(`b${i} cue${j}: 太长了，该拆成两句`)
     })

@@ -1,3 +1,5 @@
+import { HAN } from '../viz/palette'
+
 /**
  * 影片的排版基准 —— 全部是 1920 x 1080 成片坐标。
  *
@@ -51,30 +53,73 @@ export const TYPE = {
   micro: 26,
 } as const
 
-/** 底部字幕带 */
+/**
+ * 底部那一行文字的**唯一排版规范**。
+ *
+ * 影片里最靠下的那行字（FilmChrome.tsx 的 CaptionBand）只有这一处来源：
+ * 网页预览与 Remotion 导出 MP4 共用同一个 Film 组件，因此也共用这同一套数值。
+ *
+ * 规范要点：
+ *   - 字号、字重、字体、行高、字间距、颜色、对齐方式**对所有字幕一视同仁**，
+ *     包括「科学限定」那类补充说明 —— 它们只靠左侧竖线的浓淡区分，不靠字号。
+ *   - 文字块底边固定在画面底部上方 CAPTION.bottomSafe 处（基线锚点），
+ *     于是台词从一行变两行时，最后一行的位置纹丝不动，画面不会上下跳。
+ *   - 水平方向左右各留 CAPTION.sideSafe 的安全边距，最长的一行也不会顶到画面边。
+ */
 export const CAPTION = {
-  /** 正文字号 */
-  size: 38,
-  /** 补充说明（小一号、灰一些） */
-  noteSize: 30,
-  /** 行高 */
+  /** 字体家族：全站唯一的中文黑体栈，网页与 MP4 完全一致 */
+  fontFamily: HAN,
+  /** 字号（1920 x 1080 成片坐标）—— 唯一值，不分正文字号与注记字号 */
+  size: 32,
+  /**
+   * 字重 —— 唯一值。
+   *
+   * 这里必须加重，不能用常规体：汉字笔画本身就细，32px 的常规体在深色底上
+   * 笔画只有 2px 上下，经抗锯齿一磨就发灰，看不清。实测像素亮度只有理论值的
+   * 不到一半。中文在深色背景上要读得清，得往上加到半粗。
+   */
+  weight: 600,
+  /**
+   * 文字颜色 —— 唯一值，写死为 #EEF4FF。
+   *
+   * 这里刻意不引用 palette 里的 PAPER：PAPER 是全站共享色，
+   * 一旦有人调它，底部这一行会跟着变色。底部文字的取色是排版规范的一部分，
+   * 必须是这条规范自己的常量。
+   */
+  color: '#FFFFFF',
+  /** 底衬与左侧竖线用的衬色 */
+  noteColor: '#EEF4FF',
+  /** 行高 —— 唯一值 */
   lineHeight: 1.5,
+  /** 字间距 —— 唯一值 */
+  letterSpacing: '0.04em',
+  /** 水平对齐 —— 唯一值 */
+  textAlign: 'center' as const,
+  /** 左右安全边距：文字块宽度上限 = STAGE.w - sideSafe * 2 */
+  sideSafe: 150,
   /** 左右安全边距之内能放多宽 */
-  maxWidth: 1560,
-  /** 带子底部留白 */
-  padBottom: 26,
-  /** 带子上沿留白 */
-  padTop: 18,
+  maxWidth: STAGE.w - 150 * 2,
+  /** 底部安全边距：文字块底边离画面底边的距离（基线锚点，全片固定） */
+  bottomSafe: 96,
+  /** 渐变底衬在文字上下各多留多少 */
+  padY: 22,
+  /** 渐变底衬在文字左右各多留多少 */
+  padX: 48,
 } as const
 
-/** 字幕带占据的高度（按行数算，不是拍脑袋定的固定值） */
-export function captionBandHeight(lines: number, size: number = CAPTION.size): number {
-  return Math.round(lines * size * CAPTION.lineHeight + CAPTION.padTop + CAPTION.padBottom)
+/** 文字块（不含底衬）占据的高度 */
+export function captionTextHeight(lines: number, size: number = CAPTION.size): number {
+  return Math.round(lines * size * CAPTION.lineHeight)
 }
 
-/** 字幕带的上沿（从画面底往上算） */
+/** 字幕带（含底衬）占据的高度（按行数算，不是拍脑袋定的固定值） */
+export function captionBandHeight(lines: number, size: number = CAPTION.size): number {
+  return captionTextHeight(lines, size) + CAPTION.padY * 2
+}
+
+/** 字幕带的上沿（从画面底往上算）—— 场景图形不得越过这条线 */
 export function captionBandTop(lines: number, size: number = CAPTION.size): number {
-  return STAGE.y + STAGE.h - captionBandHeight(lines, size)
+  return STAGE_H - CAPTION.bottomSafe - captionTextHeight(lines, size) - CAPTION.padY
 }
 
 /* ------------------------------------------------------------- 本片的版面节奏 */
@@ -92,7 +137,7 @@ export const KEY_Y = 74
 export const KEY_BOTTOM = KEY_Y + Math.round(TYPE.keyNum * 1.35)
 
 /**
- * 主视觉区。它的高度是倒推的：一行字幕带的上沿在 y=915，
+ * 主视觉区。它的高度是倒推的：一行字幕带的上沿在 y=916，
  * 所以主视觉最多到 896 才不会被压住。
  */
 export const STAGE_AREA = { top: 250, height: 646 }

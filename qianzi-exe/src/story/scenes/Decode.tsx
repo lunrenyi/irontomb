@@ -10,7 +10,7 @@
  */
 import { ALL_CHARS, COLLISIONS, PHRASES, TOTAL_CHARS, TOTAL_PHRASES } from '../../content/qianzi'
 import { MODULE_HUE } from '../../viz/palette'
-import { alpha, AMBER, CYAN, GREEN, PAPER, VIOLET } from '../../viz/palette'
+import { alpha, AMBER, CYAN, GREEN, MONO_HAN, PAPER, VIOLET } from '../../viz/palette'
 import { GRID_COLS, GRID_FONT, GRID_POSITIONS, GRID_ROWS } from '../../viz/world'
 import { Grid, Line, Readout, Ring, Tag } from '../../viz/parts'
 import { easeInOut, lerp, range } from '../../lib/easing'
@@ -45,7 +45,7 @@ export function DecodeScene({ frame, beat, beatDuration }: SceneProps) {
   const title = beat === 4
 
   /* --- 终端启动：扫描一开始，它就该退场，把画面让给那一千个字 --- */
-  const lines = ['ARCHIVE FOUND', 'PARSING CHARACTERS', 'BUILDING WORLD MODEL']
+  const lines = ['档案已找到', '正在解析字符', '正在构建世界模型']
   const termFade = 1 - range(frame, 52, 88)
   const lineAlpha = lines.map((_, i) => range(frame, 8 + i * 16, 8 + i * 16 + 10) * termFade)
 
@@ -71,7 +71,7 @@ export function DecodeScene({ frame, beat, beatDuration }: SceneProps) {
               y={700 + i * 46}
               fontSize={30}
               fill={i === 0 ? CYAN : i === 1 ? GREEN : VIOLET}
-              fontFamily="'SFMono-Regular','JetBrains Mono',Menlo,monospace"
+              fontFamily={MONO_HAN}
               style={{ letterSpacing: '0.22em' }}
             >
               &gt; {text}
@@ -88,10 +88,10 @@ export function DecodeScene({ frame, beat, beatDuration }: SceneProps) {
             fontSize={23}
             fill={PAPER}
             opacity={(lineAlpha[2] - 0.4) * 1.6 * 0.9}
-            fontFamily="'SFMono-Regular','JetBrains Mono',Menlo,monospace"
+            fontFamily={MONO_HAN}
             style={{ letterSpacing: '0.14em' }}
           >
-            {TOTAL_PHRASES} phrases / {TOTAL_CHARS} characters / 0 duplicates in traditional
+            {TOTAL_PHRASES} 句 / {TOTAL_CHARS} 字 / 繁体原文零重复
           </text>
         ) : null}
       </g>
@@ -147,7 +147,7 @@ export function DecodeScene({ frame, beat, beatDuration }: SceneProps) {
       {glyphs ? (
         <g opacity={range(frame, 0, 30)}>
           <rect x={100} y={352} width={1720} height={452} rx={14} fill={VOID_FILL} opacity={0.94} />
-          <Tag x={150} y={416} text="TRADITIONAL / SIMPLIFIED COLLISIONS" color={AMBER} size={24} />
+          <Tag x={150} y={416} text="繁体与简体的撞字" color={AMBER} size={24} />
           <Tag
             x={150}
             y={458}
@@ -185,7 +185,7 @@ export function DecodeScene({ frame, beat, beatDuration }: SceneProps) {
       {tags ? (
         <g opacity={range(frame, 0, 30)}>
           <rect x={100} y={352} width={1720} height={452} rx={14} fill={VOID_FILL} opacity={0.94} />
-          <Tag x={150} y={416} text="SEMANTIC TAGGING" color={GREEN} size={24} />
+          <Tag x={150} y={416} text="语义标注" color={GREEN} size={24} />
           <Tag
             x={150}
             y={458}
@@ -231,15 +231,15 @@ export function DecodeScene({ frame, beat, beatDuration }: SceneProps) {
           <Tag
             x={960}
             y={560}
-            text="QIANZI.EXE — DECODE AN ANCIENT WORLD MODEL"
+            text="千字文程序 · 解码一个古代世界模型"
             color={CYAN}
             size={26}
             anchor="middle"
           />
           <g opacity={range(frame, 20, 46)}>
-            <Readout x={720} y={780} label="PHRASES" value={TOTAL_PHRASES} color={CYAN} />
-            <Readout x={900} y={780} label="CHARACTERS" value={TOTAL_CHARS} color={GREEN} />
-            <Readout x={1090} y={780} label="TRAD. UNIQUE" value={1000} color={AMBER} />
+            <Readout x={720} y={780} label="句数" value={TOTAL_PHRASES} color={CYAN} />
+            <Readout x={900} y={780} label="字数" value={TOTAL_CHARS} color={GREEN} />
+            <Readout x={1090} y={780} label="繁体不重复" value={1000} color={AMBER} />
           </g>
         </g>
       ) : null}

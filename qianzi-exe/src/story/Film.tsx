@@ -142,7 +142,7 @@ export function Film({
           frame={local}
           beats={beats}
           title={win.scene.title}
-          sub={win.scene.id === 'decode' ? 'PROLOGUE' : win.scene.id === 'whole' ? 'EPILOGUE' : 'CHAPTER ' + win.scene.chapter}
+          sub={win.scene.id === 'decode' ? '序' : win.scene.id === 'whole' ? '尾声' : '第 ' + win.scene.chapter + ' 章'}
           color={accent}
         />
         <KeyBeat frame={local} beats={beats} beatIndex={beatIndex} color={PAPER_COLOR} />
@@ -151,7 +151,7 @@ export function Film({
           frame={frame}
           chapter={win.scene.id === 'decode' ? '00' : win.scene.id === 'whole' ? '06' : win.scene.chapter}
           title={win.scene.title}
-          code={'FRAME ' + String(frame).padStart(5, '0') + ' · ' + win.scene.id.toUpperCase()}
+          code={'第 ' + String(frame).padStart(5, '0') + ' 帧 · ' + win.scene.title}
           accent={accent}
         />
       </div>

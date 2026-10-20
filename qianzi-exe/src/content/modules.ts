@@ -9,11 +9,11 @@ export type ModuleId = 'cosmos' | 'nature' | 'civilization' | 'human' | 'daily'
 
 export interface ModuleDef {
   id: ModuleId
-  /** 章节编号，01 - 05（THE WHOLE MODEL 是 06，不是一组新的句子） */
+  /** 章节编号，01 - 05（完整全景是 06，不是一组新的句子） */
   index: string
-  /** 英文名，出现在界面与影片角标上 */
+  /** 章节名：出现在导航、章节标题与影片角标上 */
   name: string
-  /** 中文名 */
+  /** 副名：这个模块具体在看什么 */
   nameZh: string
   /** 一句话：这个模块在看什么 */
   question: string
@@ -29,8 +29,8 @@ export const MODULES: ModuleDef[] = [
   {
     id: 'cosmos',
     index: '01',
-    name: 'COSMOS',
-    nameZh: '天地时序',
+    name: '宇宙',
+    nameZh: '天地、日月与时序',
     question: '古人怎么描述头顶这片天：昼夜、季节、历法与星辰。',
     region: { x: -3400, y: -1500, w: 2600, h: 2000 },
     hue: '#5fe3d0',
@@ -40,8 +40,8 @@ export const MODULES: ModuleDef[] = [
   {
     id: 'nature',
     index: '02',
-    name: 'NATURE',
-    nameZh: '山川草木',
+    name: '自然',
+    nameZh: '云雨、霜露与山河',
     question: '云雨、霜露、江河、土壤、树木与飞禽走兽：可触摸的那一半世界。',
     region: { x: -600, y: -1900, w: 3000, h: 2200 },
     hue: '#7dffb0',
@@ -51,8 +51,8 @@ export const MODULES: ModuleDef[] = [
   {
     id: 'civilization',
     index: '03',
-    name: 'CIVILIZATION',
-    nameZh: '文字与制度',
+    name: '文明',
+    nameZh: '文字、历史与制度',
     question: '文字、都邑、宫室、典籍、律令与史事：人被组织起来的样子。',
     region: { x: 1400, y: -1900, w: 2800, h: 2200 },
     hue: '#a78bfa',
@@ -62,8 +62,8 @@ export const MODULES: ModuleDef[] = [
   {
     id: 'human',
     index: '04',
-    name: 'HUMAN SYSTEMS',
-    nameZh: '修身与人事',
+    name: '人事',
+    nameZh: '修身、交友与处世',
     question: '身体、孝悌、交友、言语、心性与出处：一个人如何被塑造。',
     region: { x: 1400, y: 700, w: 3000, h: 2400 },
     hue: '#ffc46b',
@@ -73,8 +73,8 @@ export const MODULES: ModuleDef[] = [
   {
     id: 'daily',
     index: '05',
-    name: 'DAILY LIFE',
-    nameZh: '衣食器用',
+    name: '日常生活',
+    nameZh: '农事、饮食、器物与音乐',
     question: '耕种、饮食、纺织、器物、宴乐与起居：世界如何被造出来并过下去。',
     region: { x: -3400, y: 900, w: 2800, h: 2200 },
     hue: '#ff9d6b',
@@ -85,11 +85,11 @@ export const MODULES: ModuleDef[] = [
 
 export const moduleById = (id: ModuleId): ModuleDef => MODULES.find((m) => m.id === id)!
 
-/** THE WHOLE MODEL：不是新的一组句子，而是把前面五组重新接起来 */
+/** 完整全景：不是新的一组句子，而是把前面五组重新接起来 */
 export const WHOLE = {
   index: '06',
-  name: 'THE WHOLE MODEL',
-  nameZh: '完整的知识全景',
+  name: '完整全景',
+  nameZh: '全部文本与视觉关联',
   question: '一千个字本来就是一个整体：把它拆开是为了看清结构，装回去才是它本来的样子。',
   region: { x: 0, y: 0, w: 12000, h: 6000 },
   hue: '#ffffff',

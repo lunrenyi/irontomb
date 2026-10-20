@@ -122,7 +122,7 @@ export function HumanScene({ frame, beat }: SceneProps) {
             <Tag x={1420} y={456} text="夙兴温凊" color={GREEN} size={22} anchor="end" />
             <Tag x={1420} y={420} text="冬温被，夏扇凉" color={GREEN} size={18} anchor="end" opacity={0.75} />
           </g>
-          <Readout x={150} y={900} label="CONCEPT" value="伦理观念" color={AMBER} size={26} />
+          <Readout x={150} y={900} label="性质" value="伦理观念" color={AMBER} size={26} />
         </g>
       ) : null}
 
@@ -216,7 +216,7 @@ export function HumanScene({ frame, beat }: SceneProps) {
             <Line x1={1330} y1={560} x2={1630} y2={560} color={GREEN} width={0.8} opacity={0.35} dash="4 6" />
             <Tag x={1490} y={880} text="孔怀兄弟，同气连枝" color={GREEN} size={22} anchor="middle" />
           </g>
-          <Readout x={150} y={300} label="RELATION" value="人伦" color={AMBER} size={24} />
+          <Readout x={150} y={300} label="关系" value="人伦" color={AMBER} size={24} />
         </g>
       ) : null}
 

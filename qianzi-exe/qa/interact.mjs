@@ -49,16 +49,16 @@ const check = (name, ok, detail) => {
 const hero = await evaluate(`(() => {
   const t = document.body.innerText
   return {
-    archive: t.includes('ARCHIVE FOUND'),
-    parsing: t.includes('PARSING CHARACTERS'),
-    building: t.includes('BUILDING WORLD MODEL'),
+    archive: t.includes('档案已找到'),
+    parsing: t.includes('正在解析字符'),
+    building: t.includes('正在构建世界模型'),
     title: t.includes('千字文：世界的源代码'),
-    sub: t.includes('QIANZI.EXE'),
+    sub: t.includes('解码一个古代世界模型'),
     start: [...document.querySelectorAll('button')].some(b => b.textContent.includes('启动解码')),
   }
 })()`)
 check('开场：三条终端信息', hero.archive && hero.parsing && hero.building)
-check('开场：标题与英文副标题', hero.title && hero.sub)
+check('开场：标题与中文副标题', hero.title && hero.sub)
 check('开场：启动解码入口', hero.start)
 
 /* 2. 影片在播 */
@@ -118,9 +118,9 @@ const seek = await evaluate(`(async () => {
   })
   await new Promise(r => setTimeout(r, 400))
   const hud = document.querySelector('#film').innerText
-  return { frame: (hud.match(/FRAME\\s*(\\d+)/) || [])[1] || null }
+  return { frame: (hud.match(/第\\s*(\\d+)\\s*帧/) || [])[1] || null }
 })()`)
-check('影片寻址：点原文能跳到对应帧', seek.frame !== null, 'FRAME ' + seek.frame)
+check('影片寻址：点原文能跳到对应帧', seek.frame !== null, '第 ' + seek.frame + ' 帧')
 
 /* 6. 五个模块实验台都在 */
 const labs = await evaluate(`(() => {

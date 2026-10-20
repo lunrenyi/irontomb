@@ -13,7 +13,11 @@
     "film:preview": "remotion studio remotion/index.ts",
     "film:still": "remotion still remotion/index.ts QianziExe out/still.png --frame=1200",
     "export:mp4": "remotion render remotion/index.ts QianziExe out/qianzi-exe.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --log=info",
-    "export:mp4:preview": "remotion render remotion/index.ts QianziExe out/qianzi-exe-preview.mp4 --scale=0.5 --codec=h264 --crf=26 --pixel-format=yuv420p --log=info"
+    "export:mp4:preview": "remotion render remotion/index.ts QianziExe out/qianzi-exe-preview.mp4 --scale=0.5 --codec=h264 --crf=26 --pixel-format=yuv420p --log=info",
+    "qa:zh": "node qa/zh.mjs http://127.0.0.1:5177/",
+    "qa:interact": "node qa/interact.mjs http://127.0.0.1:5177/",
+    "qa:caption": "node qa/caption.mjs http://127.0.0.1:5177/",
+    "browser:stop": "scripts/browser-guard.sh stop"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.536",

@@ -28,6 +28,16 @@ export const SANS =
 export const MONO = "'SFMono-Regular', 'JetBrains Mono', Menlo, monospace"
 export const HAN = "'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif"
 
+/**
+ * 等宽栈 + 显式中文字体。
+ *
+ * SVG 里的终端小标签现在全是中文。如果只写等宽栈，浏览器会把汉字丢给默认中文字体，
+ * Remotion 导出时的字体与网页预览可能不一致（字宽、字距都会变）。
+ * 因此凡是可能渲染中文的 SVG 文本，一律走这一套显式字体栈。
+ */
+export const MONO_HAN =
+  "'SFMono-Regular', 'JetBrains Mono', Menlo, 'PingFang SC', 'Hiragino Sans GB', 'Source Han Sans SC', 'Noto Sans CJK SC', 'Microsoft YaHei', monospace"
+
 /** 把十六进制颜色加上透明度，直接给 SVG 属性用 */
 export const alpha = (hex: string, a: number): string => {
   const value = hex.replace('#', '')

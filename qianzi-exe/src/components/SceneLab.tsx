@@ -175,7 +175,7 @@ export function SceneLab({ module, sceneId }: { module: ModuleId; sceneId: Scene
           ) : null}
 
           <div className='pointer-events-none absolute bottom-3 right-4 font-mono text-[10px] tracking-[0.2em] text-faint'>
-            {def.index} · {def.name} · FRAME {String(Math.floor(frame)).padStart(4, '0')}
+            {def.index} · {def.name} · 第 {String(Math.floor(frame)).padStart(4, '0')} 帧
           </div>
         </div>
 
@@ -280,7 +280,7 @@ export function SceneLab({ module, sceneId }: { module: ModuleId; sceneId: Scene
             <p className='mt-2 text-[14px] leading-relaxed text-paper'>{selected.gloss}</p>
             {selected.modern ? (
               <div className='mt-3 border-l border-cyan/40 pl-3'>
-                <div className='font-mono text-[10px] tracking-[0.2em] text-cyan/80'>MODERN READING</div>
+                <div className='font-mono text-[10px] tracking-[0.2em] text-cyan/80'>现代解读</div>
                 <p className='mt-1 text-[12.5px] leading-relaxed text-muted'>{selected.modern}</p>
               </div>
             ) : null}

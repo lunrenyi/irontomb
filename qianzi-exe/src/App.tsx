@@ -96,7 +96,7 @@ export default function App() {
             <h1 className='font-display text-[clamp(1.4rem,4vw,2.4rem)] leading-tight tracking-[0.08em] text-paper'>
               千字文：世界的源代码
               <span className='ml-3 align-middle font-mono text-[clamp(0.65rem,1.3vw,0.85rem)] tracking-[0.26em] text-muted'>
-                QIANZI.EXE
+                解码一个古代世界模型
               </span>
             </h1>
             <p className='max-w-[40ch] text-sm leading-relaxed text-muted'>
@@ -117,7 +117,7 @@ export default function App() {
               跳过引子，直接去天地时序 ↓
             </a>
             <span className='text-[13px] leading-relaxed text-muted'>
-              影片与页面共用同一套帧驱动图形，因此导出的 MP4 与浏览器里看到的完全一致。
+              影片与页面共用同一套帧驱动图形，因此导出的成片与浏览器里看到的完全一致。
             </span>
           </div>
         </Section>
@@ -132,8 +132,8 @@ export default function App() {
           <div className='border-t border-white/10 pt-9'>
             <div className='flex flex-wrap items-baseline gap-x-5 gap-y-1'>
               <span className='font-mono text-[12px] tracking-[0.24em] text-cyan'>06</span>
-              <h2 className='font-display text-[clamp(1.4rem,3.4vw,2.1rem)] tracking-[0.08em] text-paper'>THE WHOLE MODEL</h2>
-              <span className='font-mono text-[12px] tracking-[0.18em] text-muted'>完整的知识全景</span>
+              <h2 className='font-display text-[clamp(1.4rem,3.4vw,2.1rem)] tracking-[0.08em] text-paper'>完整全景</h2>
+              <span className='font-mono text-[12px] tracking-[0.18em] text-muted'>全部文本与视觉关联</span>
             </div>
             <p className='mt-3 max-w-[62ch] text-[15px] leading-relaxed text-paper/85'>
               一千个字本来就是一个整体：把它拆开是为了看清结构，装回去才是它本来的样子。
@@ -286,9 +286,9 @@ export default function App() {
             本页所有画面 —— 星场、轨道、二十八宿星图、节气盘、十二律管、山脉剖面、云雨、霜晶、
             城郭宫室、时间轴、人物、织机、琴、钓竿、一千字的方阵与整张知识网络 ——
             全部由程序实时生成，没有任何实景照片、预制视频或装饰性代码。
-            影片与页面共用同一个纯函数 <span className='text-muted'>Film(frame)</span>，
+            影片与页面共用同一个纯函数：给一个帧号，出一帧画面。
             镜头只由固定取景与显式关键帧决定，绝不追踪正在变化的图形，
-            所以导出的 MP4 与浏览器里看到的完全一致。
+            所以导出的成片与浏览器里看到的完全一致。
           </p>
           <p className='mt-3'>
             释义与语义标签是本站的编辑内容；古代宇宙观、历史叙述与伦理观念均按其本来性质标注，

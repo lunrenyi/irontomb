@@ -8,7 +8,7 @@
  */
 import { range, easeOut, easeIn } from '../lib/easing'
 import { CYAN, PAPER, MUTED, FAINT, alpha, MONO, HAN } from '../viz/palette'
-import { CAPTION, STAGE, TYPE, captionBandHeight, wrapLines } from './layout'
+import { CAPTION, STAGE, TYPE, wrapLines } from './layout'
 import { keySize, type BeatTable, type CueWindow } from './cues'
 import { MODULE_HUE } from '../viz/palette'
 
@@ -116,7 +116,15 @@ export function KeyBeat({
   )
 }
 
-/** 字幕带：底部一条，原文 + 释义 */
+/**
+ * 底部那一行文字：原文 + 释义。
+ *
+ * 位置与外观全部来自 layout.ts 里的 CAPTION 规范，本文件不再自定任何字号或边距：
+ *   - 文字块底边固定在画面底部上方 CAPTION.bottomSafe（一行、两行完全一样），
+ *     所以幕与幕切换时这行字不会上下跳；
+ *   - 底衬只是文字背后的一层渐变，向四周多留 CAPTION.padX / padY，
+ *     不参与文字排版，因此它在不在都不会移动文字。
+ */
 export function CaptionBand({
   frame,
   cues,
@@ -133,42 +141,60 @@ export function CaptionBand({
   const opacity =
     easeOut(range(frame, cue.from, cue.from + fade)) * (1 - easeIn(range(frame, cue.to - fade, cue.to)))
   if (opacity <= 0.004) return null
-  const size = cue.size
+  const size = CAPTION.size
   const lines = wrapLines(cue.text, size, CAPTION.maxWidth)
-  const height = captionBandHeight(lines.length, size)
   return (
     <div
+      data-qz='caption-band'
       style={{
         position: 'absolute',
         left: 0,
         right: 0,
-        bottom: 0,
-        height,
+        bottom: CAPTION.bottomSafe,
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'center',
         opacity,
         pointerEvents: 'none',
       }}
     >
-      <div
-        style={{
-          maxWidth: CAPTION.maxWidth,
-          padding: '10px 34px',
-          borderLeft: cue.note ? '1px solid ' + alpha(accent, 0.35) : '1px solid ' + alpha(accent, 0.8),
-          background: 'linear-gradient(90deg, rgba(3,6,14,0) 0%, rgba(3,6,14,0.82) 12%, rgba(3,6,14,0.82) 88%, rgba(3,6,14,0) 100%)',
-        }}
-      >
+      <div style={{ position: 'relative', maxWidth: CAPTION.maxWidth, width: '100%' }}>
+        {/*
+          底衬：纯装饰，不参与排版。
+
+          zIndex 必须显式给 0：这一层是 position:absolute，按 CSS 绘制顺序，
+          定位元素画在普通流文本**之上**——不给 z-index 的话它会盖住整行字，
+          #EEF4FF 会被这层 86% 的近黑色压成 #252830，看着像「太淡」。
+          文字行同时给 position:relative + zIndex:1，两层谁在上就不靠树序猜了。
+        */}
+        <div
+          aria-hidden='true'
+          style={{
+            position: 'absolute',
+            zIndex: 0,
+            top: -CAPTION.padY,
+            bottom: -CAPTION.padY,
+            left: -CAPTION.padX,
+            right: -CAPTION.padX,
+            borderLeft: '1px solid ' + alpha(accent, cue.note ? 0.32 : 0.8),
+            background:
+              'linear-gradient(90deg, rgba(3,6,14,0) 0%, rgba(3,6,14,0.86) 14%, rgba(3,6,14,0.86) 86%, rgba(3,6,14,0) 100%)',
+          }}
+        />
         {lines.map((line, i) => (
           <div
             key={i}
+            data-qz='caption-line'
             style={{
+              position: 'relative',
+              zIndex: 1,
+              fontFamily: CAPTION.fontFamily,
               fontSize: size,
+              fontWeight: CAPTION.weight,
               lineHeight: CAPTION.lineHeight,
-              textAlign: 'center',
-              color: cue.note ? MUTED : PAPER,
-              fontFamily: HAN,
-              letterSpacing: '0.04em',
+              textAlign: CAPTION.textAlign,
+              color: CAPTION.color,
+              letterSpacing: CAPTION.letterSpacing,
+              textShadow: '0 0 18px rgba(3,6,14,1), 0 0 46px rgba(3,6,14,1)',
             }}
           >
             {line}

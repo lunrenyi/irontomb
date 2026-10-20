@@ -29,7 +29,7 @@ export function NatureScene({ frame, beat }: SceneProps) {
       {/* 地平线与地表 */}
       <g opacity={0.6}>
         <Line x1={120} y1={HORIZON} x2={1800} y2={HORIZON} color={CYAN} width={0.8} opacity={0.3} />
-        <Tag x={1800} y={HORIZON - 12} text="GROUND PLANE" color={CYAN} size={16} anchor="end" opacity={0.5} />
+        <Tag x={1800} y={HORIZON - 12} text="地平面" color={CYAN} size={20} anchor="end" opacity={0.5} />
       </g>
 
       {/* 山脉：程序化剖面 */}
@@ -143,8 +143,8 @@ export function NatureScene({ frame, beat }: SceneProps) {
           })}
           <Tag x={140} y={200} text="云腾致雨" color={CYAN} size={30} />
           <Tag x={140} y={236} text="露结为霜" color={CYAN} size={30} opacity={0.8} />
-          <Readout x={1500} y={880} label="FROST" value="直接结晶" color={CYAN} size={24} />
-          <Readout x={1500} y={960} label="DEW" value="凝结成滴" color={CYAN} size={24} />
+          <Readout x={1500} y={880} label="霜" value="直接结晶" color={CYAN} size={24} />
+          <Readout x={1500} y={960} label="露" value="凝结成滴" color={CYAN} size={24} />
         </g>
       ) : null}
 
@@ -168,7 +168,7 @@ export function NatureScene({ frame, beat }: SceneProps) {
               return <circle key={i} cx={x} cy={y} r={1.8} fill={AMBER} opacity={0.35 + 0.4 * (1 - ph)} />
             })}
             <Tag x={160} y={HORIZON + 108} text="海 · 咸" color={AMBER} size={26} />
-            <Readout x={170} y={HORIZON + 140} label="SALINITY" value="溶解 + 蒸发" color={AMBER} size={22} />
+            <Readout x={170} y={HORIZON + 140} label="盐度" value="溶解 + 蒸发" color={AMBER} size={22} />
           </g>
           {/* 河 */}
           <g opacity={range(frame, 20, 50)}>

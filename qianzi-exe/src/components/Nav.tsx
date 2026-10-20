@@ -3,12 +3,12 @@ import { cx } from './ui'
 
 const LINKS = [
   { id: 'film', label: '影片' },
-  { id: 'cosmos', label: '01 COSMOS' },
-  { id: 'nature', label: '02 NATURE' },
-  { id: 'civilization', label: '03 CIVILIZATION' },
-  { id: 'human', label: '04 HUMAN' },
-  { id: 'daily', label: '05 DAILY LIFE' },
-  { id: 'whole', label: '06 WHOLE MODEL' },
+  { id: 'cosmos', label: '01 宇宙' },
+  { id: 'nature', label: '02 自然' },
+  { id: 'civilization', label: '03 文明' },
+  { id: 'human', label: '04 人事' },
+  { id: 'daily', label: '05 日常生活' },
+  { id: 'whole', label: '06 完整全景' },
   { id: 'text', label: '原文' },
 ]
 
@@ -54,7 +54,7 @@ export function Nav() {
             <span className='h-1.5 w-1.5 rounded-full bg-cyan' />
             <span className='absolute inset-0 rounded-md border border-cyan/20' />
           </span>
-          <span className='font-mono text-[11px] tracking-[0.2em] text-paper'>QIANZI.EXE</span>
+          <span className='font-display text-[15px] tracking-[0.14em] text-paper'>千字文</span>
         </a>
         <ul className='ml-auto hidden items-center gap-1 lg:flex'>
           {LINKS.map((l) => (
